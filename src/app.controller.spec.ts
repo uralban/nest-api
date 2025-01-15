@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { HttpStatus } from '@nestjs/common';
+import { HealthCheckData } from './global/interfaces/health-check-data';
 
 describe('AppController', () => {
   let appController: AppController;
@@ -15,11 +17,12 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return Health Check Data', () => {
-      expect(appController.getHealthCheck()).toStrictEqual({
-        status_code: 200,
+    it('should return Health Check Data', async () => {
+      const result: HealthCheckData = await appController.getHealthCheck();
+      expect(result).toStrictEqual({
+        status_code: HttpStatus.OK,
         detail: 'ok',
-        result: 'working'
+        result: 'working',
       });
     });
   });

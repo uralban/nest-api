@@ -1,5 +1,7 @@
+import { HttpStatus } from '@nestjs/common';
+
 export interface HealthCheckData {
-    status_code: number;
-    detail: string;
-    result: string;
+  status_code: HttpStatus;
+  detail: string;
+  result: string;
 }

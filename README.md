@@ -75,7 +75,7 @@ For production:
 $ docker build -t meduzzen-back-app-prod-img .
 
 # Create and run container:
-$ docker run -p 8080:8080 -d --rm meduzzen-back-app-prod-img
+$ docker run -p 8080:8080 --env-file .env -d --rm meduzzen-back-app-prod-img
 ```
 
 For developing:

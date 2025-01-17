@@ -4,5 +4,6 @@ COPY package*.json .
 RUN npm ci
 COPY . .
 RUN npm run build
-EXPOSE 8080
+ARG PORT
+EXPOSE ${PORT}
 CMD ["npm","run","start:prod"]

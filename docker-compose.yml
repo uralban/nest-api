@@ -1,36 +1,34 @@
 services:
   app:
     container_name: meduzzen-back-app-dev
-    image: node:22-alpine
-    working_dir: /app
-    volumes:
-      - .:/app
-      - /node_modules
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
     command: npm run start:dev
+    depends_on:
+      test:
+        condition: service_completed_successfully
+      test-e2e:
+        condition: service_completed_successfully
 
   test:
-    image: node:22-alpine
-    working_dir: /app
-    volumes:
-      - .:/app
-      - /node_modules
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: npm run test
 
   test-cov:
-    image: node:22-alpine
-    working_dir: /app
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
-      - .:/app
-      - /node_modules
       - ./coverage:/app/coverage
     command: npm run test:cov
 
   test-e2e:
-    image: node:22-alpine
-    working_dir: /app
-    volumes:
-      - .:/app
-      - /node_modules
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: npm run test:e2e

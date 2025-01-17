@@ -44,6 +44,7 @@ DB_USER=root
 DB_PASS=root
 
 CORS_ALLOWED_ORIGINS=http://localhost:4200 ;front will be should start on this host
+CORS_ALLOWED_METHODS=GET,HEAD,PUT,PATCH,POST,DELETE ;front will be should send only these types of request
 ```
 
 ### Build and start application
@@ -82,6 +83,7 @@ For developing:
 ```bash
 $ docker compose up app
 ```
+Note: The application will not start if tests do not complete successfully.
 
 ### The application will start on
 ```
@@ -119,7 +121,7 @@ $ docker compose run test-cov
 # Run e2e tests
 $ docker compose run test-e2e
 ```
-The coverage report will be generate to `/coverage` directory.
+The coverage report will be generated to `/coverage` directory.
 
 ## API documentation
 

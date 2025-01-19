@@ -4,20 +4,47 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      NODE_ENV: development
     ports:
       - ${PORT}:${PORT}
+    restart: always
     command: npm run start:dev
+    volumes:
+      - .:/app
     depends_on:
       test:
         condition: service_completed_successfully
       test-e2e:
         condition: service_completed_successfully
+      postgres-db:
+        condition: service_healthy
+
+  postgres-db:
+    image: postgres:17.2-alpine3.21
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   test:
     build:
       context: .
       dockerfile: Dockerfile
     command: npm run test
+    depends_on:
+      postgres-db:
+        condition: service_healthy
 
   test-cov:
     build:
@@ -26,9 +53,15 @@ services:
     volumes:
       - ./coverage:/app/coverage
     command: npm run test:cov
+    depends_on:
+      postgres-db:
+        condition: service_healthy
 
   test-e2e:
     build:
       context: .
       dockerfile: Dockerfile
     command: npm run test:e2e
+    depends_on:
+      postgres-db:
+        condition: service_healthy

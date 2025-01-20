@@ -1,8 +1,9 @@
 ## Description
-```
+
 This is backend of my internship application. The goal of the project is to test various coding 
 technologies in conditions close to real ones.
-```
+
+The project can be run in Docker container. See below for details.
 
 ### Technologies
 ```
@@ -41,6 +42,9 @@ PORT=8080 ;the port of the application is running on, you can set the one you ne
 DB_HOST=localhost ;database connection settings, don`t used at the moment
 DB_USER=root
 DB_PASS=root
+
+CORS_ALLOWED_ORIGINS=http://localhost:4200 ;front will be should start on this host
+CORS_ALLOWED_METHODS=GET,HEAD,PUT,PATCH,POST,DELETE ;front will be should send only these types of request
 ```
 
 ### Build and start application
@@ -61,6 +65,25 @@ $ npm run start:debug
 # Start project in production mode
 $ npm run start:prod
 ```
+
+### Build and start application with Docker
+
+For production:
+
+```bash
+# Create image:
+$ docker build --target prod -t meduzzen-back-app-prod-img .
+
+# Create and run container:
+$ docker run -p 8080:8080 --env-file .env -d --rm meduzzen-back-app-prod-img
+```
+
+For developing:
+
+```bash
+$ docker compose --env-file .env up app --build
+```
+Note: The application will not start if tests do not complete successfully.
 
 ### The application will start on
 ```
@@ -85,6 +108,20 @@ $ npm run test:cov
 # e2e tests via Jest
 $ npm run test:e2e
 ```
+
+Testing into Docker container:
+
+```bash
+# Run unit tests
+$ docker compose --env-file .env run test
+
+# Run unit tests with coverage
+$ docker compose --env-file .env run test-cov
+
+# Run e2e tests
+$ docker compose --env-file .env run test-e2e
+```
+The coverage report will be generated to `/coverage` directory.
 
 ## API documentation
 

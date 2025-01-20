@@ -1,0 +1,44 @@
+services:
+  app:
+    container_name: meduzzen-back-app-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    volumes:
+      - node_modules:/app/node_modules
+    ports:
+      - '${PORT}:${PORT}'
+    depends_on:
+      test:
+        condition: service_completed_successfully
+      test-e2e:
+        condition: service_completed_successfully
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - node_modules:/app/node_modules
+    command: npm run test
+
+  test-cov:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./coverage:/app/coverage
+      - node_modules:/app/node_modules
+    command: npm run test:cov
+
+  test-e2e:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - node_modules:/app/node_modules
+    command: npm run test:e2e
+
+volumes:
+  node_modules:

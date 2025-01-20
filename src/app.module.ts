@@ -1,4 +1,4 @@
-import { INestApplication, Module } from '@nestjs/common';
+import {INestApplication, Module} from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';

@@ -9,12 +9,12 @@ async function bootstrap() {
   AppModule.setupSwagger(app);
 
   app.enableCors({
-    "origin": process.env.CORS_ALLOWED_ORIGINS,
-    "methods": process.env.CORS_ALLOWED_METHODS,
-    "preflightContinue": false,
-    "optionsSuccessStatus": 204
+    origin: process.env.CORS_ALLOWED_ORIGINS,
+    methods: process.env.CORS_ALLOWED_METHODS,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.API_PORT ?? 3000);
 }
 bootstrap();

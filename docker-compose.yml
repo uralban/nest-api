@@ -6,9 +6,13 @@ services:
       dockerfile: Dockerfile
       target: dev
     volumes:
+      - ./src:/app/src
       - node_modules:/app/node_modules
     ports:
-      - '${PORT}:${PORT}'
+      - '${API_PORT}:${API_PORT}'
+    restart: always
+    env_file:
+      - .env
     depends_on:
       test:
         condition: service_completed_successfully
@@ -27,7 +31,9 @@ services:
     ports:
       - '${DB_PORT}:5432'
     volumes:
-      - ./db/data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
     healthcheck:
       test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'" ]
       interval: 10s
@@ -38,8 +44,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
     volumes:
       - node_modules:/app/node_modules
+    env_file:
+      - .env
     command: npm run test
     depends_on:
       postgres-db:
@@ -49,9 +58,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
     volumes:
       - ./coverage:/app/coverage
       - node_modules:/app/node_modules
+    env_file:
+      - .env
     command: npm run test:cov
     depends_on:
       postgres-db:
@@ -61,8 +73,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
     volumes:
       - node_modules:/app/node_modules
+    env_file:
+      - .env
     command: npm run test:e2e
     depends_on:
       postgres-db:
@@ -70,3 +85,4 @@ services:
 
 volumes:
   node_modules:
+  db_data:

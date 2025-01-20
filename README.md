@@ -88,7 +88,7 @@ $ docker run -p 8080:8080 --env-file .env -d --rm meduzzen-back-app-prod-img
 For developing:
 
 ```bash
-$ docker compose --env-file .env up app --build
+$ docker compose up app --build
 ```
 Note: The application will not start if tests don't complete successfully.
 
@@ -120,13 +120,13 @@ Testing into Docker container:
 
 ```bash
 # Run unit tests
-$ docker compose --env-file .env run test
+$ docker compose run test
 
 # Run unit tests with coverage
-$ docker compose --env-file .env run test-cov
+$ docker compose run test-cov
 
 # Run e2e tests
-$ docker compose --env-file .env run test-e2e
+$ docker compose run test-e2e
 ```
 The coverage report will be generated to `/coverage` directory.
 

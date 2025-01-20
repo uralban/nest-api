@@ -79,7 +79,7 @@ For production:
 
 ```bash
 # Create image:
-$ docker build -t meduzzen-back-app-prod-img .
+$ docker build --target prod -t meduzzen-back-app-prod-img .
 
 # Create and run container:
 $ docker run -p 8080:8080 --env-file .env -d --rm meduzzen-back-app-prod-img
@@ -120,13 +120,13 @@ Testing into Docker container:
 
 ```bash
 # Run unit tests
-$ docker compose run test
+$ docker compose --env-file .env run test
 
 # Run unit tests with coverage
-$ docker compose run test-cov
+$ docker compose --env-file .env run test-cov
 
 # Run e2e tests
-$ docker compose run test-e2e
+$ docker compose --env-file .env run test-e2e
 ```
 The coverage report will be generated to `/coverage` directory.
 

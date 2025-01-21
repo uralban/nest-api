@@ -40,7 +40,7 @@ You need to create .env file in project root directory. This file should contain
 ```
 API_VERSION=1.0 ;current application version
 
-API_PORT=8080 ;the port of the application is running on, you can set the one you need
+PORT=8080 ;the port of the application is running on, you can set the one you need
 
 DB_HOST=postgres-db ;database settings
 DB_USER=alex

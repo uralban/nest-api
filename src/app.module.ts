@@ -3,15 +3,20 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TypeOrmDataBaseSettings } from './config/typeorm.config';
-
-require('dotenv').config();
+import {dataSourceOptions} from "./config/app-data-source";
+import {ConfigModule} from "@nestjs/config";
 
 @Module({
-  imports: [TypeOrmModule.forRoot(TypeOrmDataBaseSettings)],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    TypeOrmModule.forRoot(dataSourceOptions)
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
+
 export class AppModule {
   static setupSwagger(app: INestApplication): void {
     const config = new DocumentBuilder()

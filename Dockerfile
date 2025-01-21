@@ -1,8 +1,8 @@
 FROM node:22-alpine AS base
 WORKDIR /app
 COPY package*.json .
-ARG API_PORT
-EXPOSE ${API_PORT}
+ARG PORT
+EXPOSE ${PORT}
 
 FROM base AS prod
 RUN npm ci

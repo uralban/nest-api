@@ -1,16 +1,14 @@
 import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  ManyToOne,
-  PrimaryGeneratedColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    ManyToOne,
 } from 'typeorm';
 import { Role } from './role.entity';
+import {BaseCustomEntity} from "../../global/entities/base-custom.entity";
 
 @Entity()
-export class User {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+export class User extends BaseCustomEntity{
 
   @Column('varchar', { length: 200 })
   firstName: string;

@@ -1,19 +1,25 @@
-import {Seeder, SeederFactoryManager} from "typeorm-extension";
-import {DataSource} from "typeorm";
-import {Role} from "../../user/entities/role.entity";
+import { Seeder, SeederFactoryManager } from 'typeorm-extension';
+import { DataSource, Repository } from 'typeorm';
+import { Role } from '../../user/entities/role.entity';
 
 export default class RoleSeeder implements Seeder {
-    track: boolean = false;
+  track: boolean = false;
 
-    public async run(
-        dataSource: DataSource,
-        factoryManager: SeederFactoryManager
-    ): Promise<void> {
-        const repository = dataSource.getRepository(Role);
-        const roles = [
-            { id: (await (await factoryManager.get(Role)).make()).id, roleName: "admin" },
-            { id: (await (await factoryManager.get(Role)).make()).id, roleName: "user" },
-        ];
-        await repository.save(roles);
-    }
+  public async run(
+    dataSource: DataSource,
+    factoryManager: SeederFactoryManager,
+  ): Promise<void> {
+    const repository: Repository<Role> = dataSource.getRepository(Role);
+    const roles: Role[] = [
+      {
+        id: (await (await factoryManager.get(Role)).make()).id,
+        roleName: 'admin',
+      },
+      {
+        id: (await (await factoryManager.get(Role)).make()).id,
+        roleName: 'user',
+      },
+    ];
+    await repository.save(roles);
+  }
 }

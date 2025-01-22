@@ -113,7 +113,7 @@ $ npm run migration:run
 $ npm run migration:revert
 ```
 
-You can seed default data to BD after migration complete by command:
+You can seed default data to DB after migration complete by command:
 ```bash
 $ npm run seed
 ```

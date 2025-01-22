@@ -3,13 +3,16 @@
 This is backend of my internship application. The goal of the project is to test various coding 
 technologies in conditions close to real ones.
 
-The project can be run in Docker container. See below for details.
+The project can be run in `Docker` container. See below for details.
+
+The database used in project is `PostgreSQL`.
 
 ### Technologies
 ```
 Nest.js v.10.0.0
 TypeScript v.5.1.3
 Jest v.29.5.0
+PostgreSQL v.17.2
 ```
 
 ### Requirements
@@ -39,9 +42,11 @@ API_VERSION=1.0 ;current application version
 
 PORT=8080 ;the port of the application is running on, you can set the one you need
 
-DB_HOST=localhost ;database connection settings, don`t used at the moment
-DB_USER=root
-DB_PASS=root
+DB_HOST=postgres-db ;database settings
+DB_USER=alex
+DB_PASS=pass
+DB_NAME=alex_db
+DB_PORT=5432
 
 CORS_ALLOWED_ORIGINS=http://localhost:4200 ;front will be should start on this host
 CORS_ALLOWED_METHODS=GET,HEAD,PUT,PATCH,POST,DELETE ;front will be should send only these types of request
@@ -81,9 +86,9 @@ $ docker run -p 8080:8080 --env-file .env -d --rm meduzzen-back-app-prod-img
 For developing:
 
 ```bash
-$ docker compose --env-file .env up app --build
+$ docker compose up app --build
 ```
-Note: The application will not start if tests do not complete successfully.
+Note: The application will not start if tests don't complete successfully.
 
 ### The application will start on
 ```
@@ -113,13 +118,13 @@ Testing into Docker container:
 
 ```bash
 # Run unit tests
-$ docker compose --env-file .env run test
+$ docker compose run test
 
 # Run unit tests with coverage
-$ docker compose --env-file .env run test-cov
+$ docker compose run test-cov
 
 # Run e2e tests
-$ docker compose --env-file .env run test-e2e
+$ docker compose run test-e2e
 ```
 The coverage report will be generated to `/coverage` directory.
 

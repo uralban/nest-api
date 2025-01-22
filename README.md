@@ -95,6 +95,29 @@ Note: The application will not start if tests don't complete successfully.
 localhost:8080
 ```
 
+## Migrations
+
+Docker container with DB should be start for success complete generate/run/revert migration
+
+```bash
+# Create empty migration
+$ npm run migration:create
+
+# Generate new migration
+$ npm run migration:generate -- src/database/migrations/<migration_name>
+
+# Run migrations
+$ npm run migration:run
+
+# Revert the last migration
+$ npm run migration:revert
+```
+
+You can seed default data to DB after migration complete by command:
+```bash
+$ npm run seed
+```
+
 ## Testing application
 
 ```bash

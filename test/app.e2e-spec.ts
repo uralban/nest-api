@@ -16,13 +16,10 @@ describe('AppController (e2e)', () => {
   });
 
   it('/ (GET)', () => {
-    return request(app.getHttpServer())
-        .get('/')
-        .expect(HttpStatus.OK)
-        .expect({
-          status_code: HttpStatus.OK,
-          detail: 'ok',
-          result: 'working',
+    return request(app.getHttpServer()).get('/').expect(HttpStatus.OK).expect({
+      status_code: HttpStatus.OK,
+      detail: 'ok',
+      result: 'working',
     });
   });
 });

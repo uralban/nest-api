@@ -16,8 +16,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
 import { DeleteResultMessage } from '../global/interfaces/delete-result-message';
-import { PageDto } from '../global/dto/page.dto';
-import { PageOptionsDto } from '../global/dto/page-options.dto';
+import { PaginationDto } from '../global/dto/pagination.dto';
+import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 
 @ApiTags('User')
 @Controller('user')
@@ -53,8 +53,8 @@ export class UserController {
     description: 'Bad request',
   })
   public async getAllUsers(
-    @Query() pageOptionsDto: PageOptionsDto,
-  ): Promise<PageDto<User>> {
+    @Query() pageOptionsDto: PaginationOptionsDto,
+  ): Promise<PaginationDto<User>> {
     return await this.userService.getAllUsers(pageOptionsDto);
   }
 

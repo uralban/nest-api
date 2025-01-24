@@ -1,5 +1,6 @@
 import { ErrorHandlerFilter } from './error-handler.filter';
 import { HttpException, HttpStatus } from '@nestjs/common';
+
 describe('ErrorHandlerFilterFilter', () => {
   let filter: ErrorHandlerFilter;
   let mockArgumentsHost;

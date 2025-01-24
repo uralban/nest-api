@@ -7,8 +7,8 @@ import { Role } from './entities/role.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { NotFoundException } from '@nestjs/common';
 import { DeleteResultMessage } from '../global/interfaces/delete-result-message';
-import { PageOptionsDto } from '../global/dto/page-options.dto';
-import { PageDto } from '../global/dto/page.dto';
+import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
+import { PaginationDto } from '../global/dto/pagination.dto';
 import { Order } from '../global/enums/order.enum';
 
 describe('UserController', () => {
@@ -51,7 +51,12 @@ describe('UserController', () => {
         password: 'test',
       };
       const mockUuid = 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d';
-      const mockRole: Role = { id: 'role-id', roleName: 'user' };
+      const mockRole: Role = {
+        id: 'role-id',
+        roleName: 'user',
+        updatedAt: new Date(),
+        createdAt: new Date(),
+      };
       const result: User = {
         id: mockUuid,
         firstName: 'John',
@@ -60,6 +65,7 @@ describe('UserController', () => {
         passHash: 'hashedpassword',
         token: '',
         createdAt: new Date(),
+        updatedAt: new Date(),
         role: mockRole,
       };
       mockUserService.createUser.mockResolvedValue(result);
@@ -78,7 +84,12 @@ describe('UserController', () => {
         password: 'test',
       };
       const mockUuid = 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d';
-      const mockRole: Role = { id: 'role-id', roleName: 'user' };
+      const mockRole: Role = {
+        id: 'role-id',
+        roleName: 'user',
+        updatedAt: new Date(),
+        createdAt: new Date(),
+      };
       const result: User = {
         id: mockUuid,
         firstName: 'John',
@@ -87,6 +98,7 @@ describe('UserController', () => {
         passHash: 'hashedpassword',
         token: '',
         createdAt: new Date(),
+        updatedAt: new Date(),
         role: mockRole,
       };
       mockUserService.updateUserById.mockResolvedValue(result);
@@ -153,7 +165,12 @@ describe('UserController', () => {
   describe('gatAllUsers', () => {
     it('should return a list of users with pagination', async () => {
       const mockUuid = 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d';
-      const mockRole: Role = { id: 'role-id', roleName: 'user' };
+      const mockRole: Role = {
+        id: 'role-id',
+        roleName: 'user',
+        updatedAt: new Date(),
+        createdAt: new Date(),
+      };
       const mockUsers: User[] = [
         {
           id: mockUuid,
@@ -163,10 +180,11 @@ describe('UserController', () => {
           passHash: 'hashedpassword',
           token: '',
           createdAt: new Date(),
+          updatedAt: new Date(),
           role: mockRole,
         },
       ];
-      const mockPageDto: PageDto<User> = new PageDto(mockUsers, {
+      const mockPageDto: PaginationDto<User> = new PaginationDto(mockUsers, {
         page: 1,
         take: 1,
         itemCount: 1,
@@ -175,7 +193,7 @@ describe('UserController', () => {
         hasPreviousPage: false,
       });
       mockUserService.getAllUsers.mockResolvedValue(mockPageDto);
-      const pageOptionsDto: PageOptionsDto = {
+      const pageOptionsDto: PaginationOptionsDto = {
         page: 1,
         take: 10,
         order: Order.ASC,
@@ -193,7 +211,12 @@ describe('UserController', () => {
   describe('gatUserById', () => {
     it('should return user by id', async () => {
       const mockUuid = 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d';
-      const mockRole: Role = { id: 'role-id', roleName: 'user' };
+      const mockRole: Role = {
+        id: 'role-id',
+        roleName: 'user',
+        updatedAt: new Date(),
+        createdAt: new Date(),
+      };
       const result: User = {
         id: mockUuid,
         firstName: 'John',
@@ -202,6 +225,7 @@ describe('UserController', () => {
         passHash: 'hashedpassword',
         token: '',
         createdAt: new Date(),
+        updatedAt: new Date(),
         role: mockRole,
       };
       mockUserService.getUserById.mockResolvedValue(result);

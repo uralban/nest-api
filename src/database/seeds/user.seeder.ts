@@ -30,6 +30,7 @@ export default class UserSeeder implements Seeder {
         passHash: 'password',
         token: '',
         createdAt: (await (await factoryManager.get(User)).make()).createdAt,
+        updatedAt: new Date(),
         role: adminRole,
       },
       {
@@ -40,6 +41,7 @@ export default class UserSeeder implements Seeder {
         passHash: 'password',
         token: '',
         createdAt: (await (await factoryManager.get(User)).make()).createdAt,
+        updatedAt: new Date(),
         role: userRole,
       },
       {
@@ -50,6 +52,7 @@ export default class UserSeeder implements Seeder {
         passHash: 'password',
         token: '',
         createdAt: (await (await factoryManager.get(User)).make()).createdAt,
+        updatedAt: new Date(),
         role: userRole,
       },
     ];

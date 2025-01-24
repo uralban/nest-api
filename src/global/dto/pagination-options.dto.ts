@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Order } from '../enums/order.enum';
 
-export class PageOptionsDto {
+export class PaginationOptionsDto {
   @ApiPropertyOptional({ enum: Order, default: Order.ASC })
   readonly order?: Order = Order.ASC;
 

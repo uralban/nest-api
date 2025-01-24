@@ -14,10 +14,14 @@ export default class RoleSeeder implements Seeder {
       {
         id: (await (await factoryManager.get(Role)).make()).id,
         roleName: 'admin',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         id: (await (await factoryManager.get(Role)).make()).id,
         roleName: 'user',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ];
     await repository.save(roles);

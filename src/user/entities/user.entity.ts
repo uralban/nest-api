@@ -1,11 +1,4 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  Relation,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
 import { Role } from './role.entity';
 import { BaseCustomEntity } from '../../global/entities/base-custom.entity';
 import { ApiProperty } from '@nestjs/swagger';
@@ -37,13 +30,6 @@ export class User extends BaseCustomEntity {
   @Column('varchar', { length: 200 })
   @Exclude()
   token: string;
-
-  @ApiProperty({
-    description: 'Create date of the user',
-    example: '2025-01-01 05:07:27.800000',
-  })
-  @CreateDateColumn()
-  createdAt: Date;
 
   @ApiProperty({ description: 'Role of the user', type: () => Role })
   @ManyToOne(() => Role, role => role.roleName)

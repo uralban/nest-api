@@ -8,9 +8,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResultMessage } from '../global/interfaces/delete-result-message';
 import * as bcrypt from 'bcrypt';
 import { Role } from './entities/role.entity';
-import { PageOptionsDto } from '../global/dto/page-options.dto';
-import { PageDto } from '../global/dto/page.dto';
-import { PageMetaDto } from '../global/dto/page-meta.dto';
+import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
+import { PaginationDto } from '../global/dto/pagination.dto';
+import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
 
 @Injectable()
 export class UserService {
@@ -64,8 +64,8 @@ export class UserService {
   }
 
   public async getAllUsers(
-    pageOptionsDto: PageOptionsDto,
-  ): Promise<PageDto<User>> {
+    pageOptionsDto: PaginationOptionsDto,
+  ): Promise<PaginationDto<User>> {
     const queryBuilder: SelectQueryBuilder<User> =
       this.usersRepository.createQueryBuilder('user');
 
@@ -77,12 +77,12 @@ export class UserService {
 
     const itemCount: number = await queryBuilder.getCount();
     const { entities } = await queryBuilder.getRawAndEntities();
-    const pageMetaDto: PageMetaDto = new PageMetaDto({
-      pageOptionsDto,
+    const pageMetaDto: PaginationMetaDto = new PaginationMetaDto({
+      paginationOptionsDto: pageOptionsDto,
       itemCount,
     });
 
-    return new PageDto(entities, pageMetaDto);
+    return new PaginationDto(entities, pageMetaDto);
   }
 
   public async getUserById(id: string): Promise<User> {

@@ -1,8 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { GeneralResponseInterceptor } from './global/interceptors/general-response/general-response.interceptor';
+import { ErrorHandlerFilter } from './global/filters/error-handler-filter/error-handler.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.useGlobalInterceptors(new GeneralResponseInterceptor());
+  app.useGlobalFilters(new ErrorHandlerFilter());
 
   AppModule.setupSwagger(app);
 

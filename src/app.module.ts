@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceOptions } from './config/app-data-source';
 import { ConfigModule } from '@nestjs/config';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ConfigModule } from '@nestjs/config';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],

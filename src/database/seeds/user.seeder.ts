@@ -17,6 +17,10 @@ export default class UserSeeder implements Seeder {
       roleName: 'admin',
     });
 
+    const userRole: Role = await roleRepository.findOneBy({
+      roleName: 'user',
+    });
+
     const users: User[] = [
       {
         id: (await (await factoryManager.get(User)).make()).id,
@@ -26,7 +30,30 @@ export default class UserSeeder implements Seeder {
         passHash: 'password',
         token: '',
         createdAt: (await (await factoryManager.get(User)).make()).createdAt,
-        role: adminRole.id,
+        updatedAt: new Date(),
+        role: adminRole,
+      },
+      {
+        id: (await (await factoryManager.get(User)).make()).id,
+        firstName: (await (await factoryManager.get(User)).make()).firstName,
+        lastName: (await (await factoryManager.get(User)).make()).lastName,
+        emailLogin: (await (await factoryManager.get(User)).make()).emailLogin,
+        passHash: 'password',
+        token: '',
+        createdAt: (await (await factoryManager.get(User)).make()).createdAt,
+        updatedAt: new Date(),
+        role: userRole,
+      },
+      {
+        id: (await (await factoryManager.get(User)).make()).id,
+        firstName: (await (await factoryManager.get(User)).make()).firstName,
+        lastName: (await (await factoryManager.get(User)).make()).lastName,
+        emailLogin: (await (await factoryManager.get(User)).make()).emailLogin,
+        passHash: 'password',
+        token: '',
+        createdAt: (await (await factoryManager.get(User)).make()).createdAt,
+        updatedAt: new Date(),
+        role: userRole,
       },
     ];
     await userRepository.save(users);

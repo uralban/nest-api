@@ -22,7 +22,7 @@ import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { AuthGuard } from '../auth/auth.guard';
 
 @ApiTags('User')
-@Controller('api/user')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

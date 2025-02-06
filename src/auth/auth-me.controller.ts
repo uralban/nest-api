@@ -5,7 +5,7 @@ import { User } from '../user/entities/user.entity';
 import { AuthGuard } from './auth.guard';
 
 @ApiTags('Me')
-@Controller('api/me')
+@Controller('me')
 export class AuthMeController {
   constructor(private authService: AuthService) {}
 
@@ -22,10 +22,10 @@ export class AuthMeController {
   @UseGuards(AuthGuard)
   public async getUserAfterLogin(@Req() request): Promise<User> {
     if (request.cookies?.access_token)
-      return await this.authService.getUserAfterLogin(
+      return await this.authService.getUserAfterLoginByLocal(
         request.cookies?.access_token,
       );
-    return await this.authService.getUserAfterLogin(
+    return await this.authService.getUserAfterLoginByAuth0(
       request.headers['x-id-token'],
     );
   }

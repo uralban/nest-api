@@ -10,13 +10,14 @@ import { Auth } from './entities/auth.entity';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
 import { User } from '../user/entities/user.entity';
-import { JwtService } from '@nestjs/jwt';
-import { Auth0UserDto } from '../global/dto/user/auth0-user.dto';
+import { AuthUserDto } from '../global/dto/user/auth-user.dto';
 import { Role } from '../role/entities/role.entity';
 import { CreateUserDto } from '../global/dto/user/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { TokenSet } from '../global/interfaces/token-set';
 import { LoginDto } from '../global/dto/login.dto';
+import { LocalJwtService } from './local-jwt.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -30,7 +31,8 @@ export class AuthService {
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
     private redisService: RedisService,
-    private jwtService: JwtService,
+    private auth0JwtService: JwtService,
+    private localJwtService: LocalJwtService,
   ) {}
 
   public async saveAccessToken(
@@ -97,13 +99,13 @@ export class AuthService {
       this.logger.error('Password is incorrect.');
       throw new UnauthorizedException('Password is incorrect');
     }
-    const accessToken: string = this.jwtService.sign(
+    const accessToken: string = this.localJwtService.sign(
       { email: user.emailLogin },
-      { expiresIn: '15m' },
+      '15m',
     );
-    const refreshToken: string = this.jwtService.sign(
+    const refreshToken: string = this.localJwtService.sign(
       { email: user.emailLogin },
-      { expiresIn: '7d' },
+      '7d',
     );
 
     await this.saveAccessToken(user.emailLogin, accessToken);
@@ -112,7 +114,7 @@ export class AuthService {
   }
 
   public async logoutUser(token: string): Promise<void> {
-    const email: string = this.decodeIdToken(token).email;
+    const email: string = this.decodeLocalToken(token).email;
     await this.deleteAccessToken(email);
     await this.deleteRefreshToken(email);
   }
@@ -175,27 +177,45 @@ export class AuthService {
     return user;
   }
 
-  private decodeIdToken(idToken: string) {
+  private decodeAuth0Token(token: string): AuthUserDto {
     try {
-      return this.jwtService.decode(idToken);
+      return this.auth0JwtService.decode(token);
     } catch (error) {
       this.logger.error('Decode token error. ', error);
       return null;
     }
   }
 
-  public async getUserAfterLogin(idToken: string): Promise<User> {
-    if (!idToken) {
-      this.logger.error('ID Token not provided.');
-      throw new Error('ID Token not provided');
+  private decodeLocalToken(token: string): AuthUserDto {
+    try {
+      return this.localJwtService.decode(token);
+    } catch (error) {
+      this.logger.error('Decode token error. ', error);
+      return null;
     }
-    const decodedIdToken: Auth0UserDto = this.decodeIdToken(idToken);
+  }
+
+  public async getUserAfterLoginByLocal(token: string): Promise<User> {
+    if (!token) {
+      this.logger.error('Token not provided.');
+      throw new Error('Token not provided');
+    }
+    return this.getUserAfterLogin(this.decodeAuth0Token(token));
+  }
+
+  public async getUserAfterLoginByAuth0(token: string): Promise<User> {
+    if (!token) {
+      this.logger.error('Token not provided.');
+      throw new Error('Token not provided');
+    }
+    return this.getUserAfterLogin(this.decodeLocalToken(token));
+  }
+
+  public async getUserAfterLogin(decodedToken: AuthUserDto): Promise<User> {
     this.logger.log('Check user exist.');
     const user: User = await this.userRepository.findOne({
       where: {
-        emailLogin: decodedIdToken.email
-          ? decodedIdToken.email
-          : decodedIdToken.sub,
+        emailLogin: decodedToken.email ? decodedToken.email : decodedToken.sub,
       },
       relations: {
         role: true,
@@ -204,9 +224,9 @@ export class AuthService {
     if (!user) {
       this.logger.warn('User not exist, adding user to the database.');
       const createUser: CreateUserDto = {
-        emailLogin: decodedIdToken.email,
-        firstName: decodedIdToken.given_name,
-        lastName: decodedIdToken.family_name,
+        emailLogin: decodedToken.email,
+        firstName: decodedToken.given_name,
+        lastName: decodedToken.family_name,
         password: '',
       };
       return this.createNewUserByAuth0(createUser);

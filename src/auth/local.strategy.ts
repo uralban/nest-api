@@ -1,28 +1,28 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { CustomTokenPayload } from '../global/interfaces/custom-token-payload';
 import { AuthService } from './auth.service';
 import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
+import { LocalJwtService } from './local-jwt.service';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
   private readonly logger: Logger = new Logger(LocalStrategy.name);
 
   constructor(
-    private jwtService: JwtService,
     private authService: AuthService,
     private userService: UserService,
+    private localJwtService: LocalJwtService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: Request) => request.cookies['access_token'],
       ]),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET,
+      secretOrKey: process.env.JWT_SECRET_LOCAL,
       passReqToCallback: true,
     });
   }
@@ -37,7 +37,8 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     }
 
     try {
-      const payload: CustomTokenPayload = this.jwtService.verify(accessToken);
+      const payload: CustomTokenPayload =
+        this.localJwtService.verify(accessToken);
       request.user = payload;
       const accessTokenIsValid: boolean =
         await this.authService.validateAccessToken(payload.email, accessToken);
@@ -54,7 +55,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
 
     try {
       const refreshPayload: CustomTokenPayload =
-        this.jwtService.verify(refreshToken);
+        this.localJwtService.verify(refreshToken);
       const user: User = await this.userService.getUserByEmail(
         refreshPayload.email,
       );
@@ -68,13 +69,13 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
         throw new UnauthorizedException('Authorization failed');
       }
 
-      const newAccessToken: string = this.jwtService.sign(
+      const newAccessToken: string = this.localJwtService.sign(
         { email: user.emailLogin },
-        { expiresIn: '15m' },
+        '15m',
       );
-      const newRefreshToken: string = this.jwtService.sign(
+      const newRefreshToken: string = this.localJwtService.sign(
         { email: user.emailLogin },
-        { expiresIn: '7d' },
+        '7d',
       );
 
       await this.authService.saveAccessToken(user.emailLogin, newAccessToken);

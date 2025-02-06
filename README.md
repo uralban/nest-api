@@ -38,28 +38,29 @@ $ npm install
 
 You need to create .env file in project root directory. This file should contain the following data:
 ```
-API_VERSION=1.0 ;current application version
+API_VERSION ;current application version
 
-PORT=8080 ;the port of the application is running on, you can set the one you need
+PORT ;the port of the application is running on, you can set the one you need
 
-DB_HOST=postgres-db ;database settings
-DB_USER=alex
-DB_PASS=pass
-DB_NAME=alex_db
-DB_PORT=5432
+DB_HOST ;database settings
+DB_USER
+DB_PASS
+DB_NAME
+DB_PORT
 
-CORS_ALLOWED_ORIGINS=http://localhost:4200 ;front will be should start on this host
-CORS_ALLOWED_METHODS=GET,HEAD,PUT,PATCH,POST,DELETE ;front will be should send only these types of request
+CORS_ALLOWED_ORIGINS ;front will be should start on this host
+CORS_ALLOWED_METHODS ;front will be should send only these types of request
 
-REDIS_HOST=redis ;redis settings
-REDIS_PORT=6379
-REDIS_PASS=pass
-REDIS_USER=alex
+REDIS_HOST ;redis settings
+REDIS_PORT
+REDIS_PASS
+REDIS_USER
 
-AUTH0_DOMAIN=dev-ewvl3n56vjkfso0q.us.auth0.com ;auth0 settings
-AUTH0_AUDIENCE=https://dev-ewvl3n56vjkfso0q.us.auth0.com/api/v2/
+AUTH0_DOMAIN ;auth0 settings
+AUTH0_AUDIENCE
 
-JWT_SECRET=u82eC7LWx9Z53F4C8pL5XeGq78TnF5fUwNnRvK4+qZx1aP1dF3QvV1x5QnW ;jwt secret key
+JWT_SECRET_AUTH0 ;jwt secret keyы
+JWT_SECRET_LOCAL
 ```
 
 ### Build and start application

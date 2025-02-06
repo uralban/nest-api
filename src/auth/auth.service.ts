@@ -99,11 +99,11 @@ export class AuthService {
       this.logger.error('Password is incorrect.');
       throw new UnauthorizedException('Password is incorrect');
     }
-    const accessToken: string = this.localJwtService.sign(
+    const accessToken: string = this.localJwtService.signAccess(
       { email: user.emailLogin },
       '15m',
     );
-    const refreshToken: string = this.localJwtService.sign(
+    const refreshToken: string = this.localJwtService.signRefresh(
       { email: user.emailLogin },
       '7d',
     );

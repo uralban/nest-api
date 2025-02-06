@@ -9,16 +9,29 @@ export class LocalJwtService {
     private configService: ConfigService,
   ) {}
 
-  public sign(payload: any, expiresIn?: string): string {
+  public signAccess(payload: any, expiresIn?: string): string {
     return this.jwtService.sign(payload, {
-      secret: this.configService.get('JWT_SECRET_LOCAL'),
+      secret: this.configService.get('JWT_SECRET_LOCAL_ACCESS'),
       expiresIn: expiresIn ? expiresIn : '15m',
     });
   }
 
-  public verify(token: string): any {
+  public signRefresh(payload: any, expiresIn?: string): string {
+    return this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_SECRET_LOCAL_REFRESH'),
+      expiresIn: expiresIn ? expiresIn : '15m',
+    });
+  }
+
+  public verifyAccess(token: string): any {
     return this.jwtService.verify(token, {
-      secret: this.configService.get('JWT_SECRET_LOCAL'),
+      secret: this.configService.get('JWT_SECRET_LOCAL_ACCESS'),
+    });
+  }
+
+  public verifyRefresh(token: string): any {
+    return this.jwtService.verify(token, {
+      secret: this.configService.get('JWT_SECRET_LOCAL_REFRESH'),
     });
   }
 

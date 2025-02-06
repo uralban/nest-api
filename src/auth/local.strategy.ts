@@ -22,7 +22,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
         (request: Request) => request.cookies['access_token'],
       ]),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET_LOCAL,
+      secretOrKey: process.env.JWT_SECRET_LOCAL_ACCESS,
       passReqToCallback: true,
     });
   }
@@ -38,7 +38,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
 
     try {
       const payload: CustomTokenPayload =
-        this.localJwtService.verify(accessToken);
+        this.localJwtService.verifyAccess(accessToken);
       request.user = payload;
       const accessTokenIsValid: boolean =
         await this.authService.validateAccessToken(payload.email, accessToken);
@@ -55,7 +55,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
 
     try {
       const refreshPayload: CustomTokenPayload =
-        this.localJwtService.verify(refreshToken);
+        this.localJwtService.verifyRefresh(refreshToken);
       const user: User = await this.userService.getUserByEmail(
         refreshPayload.email,
       );
@@ -69,11 +69,11 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
         throw new UnauthorizedException('Authorization failed');
       }
 
-      const newAccessToken: string = this.localJwtService.sign(
+      const newAccessToken: string = this.localJwtService.signAccess(
         { email: user.emailLogin },
         '15m',
       );
-      const newRefreshToken: string = this.localJwtService.sign(
+      const newRefreshToken: string = this.localJwtService.signRefresh(
         { email: user.emailLogin },
         '7d',
       );

@@ -60,7 +60,8 @@ AUTH0_DOMAIN ;auth0 settings
 AUTH0_AUDIENCE
 
 JWT_SECRET_AUTH0 ;jwt secret keyы
-JWT_SECRET_LOCAL
+JWT_SECRET_LOCAL_ACCESS
+JWT_SECRET_LOCAL_REFRESH
 ```
 
 ### Build and start application

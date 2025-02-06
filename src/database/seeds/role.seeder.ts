@@ -1,6 +1,6 @@
 import { Seeder, SeederFactoryManager } from 'typeorm-extension';
 import { DataSource, Repository } from 'typeorm';
-import { Role } from '../../user/entities/role.entity';
+import { Role } from '../../role/entities/role.entity';
 
 export default class RoleSeeder implements Seeder {
   track: boolean = false;

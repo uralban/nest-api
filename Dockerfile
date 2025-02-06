@@ -15,3 +15,6 @@ RUN npm install
 COPY . .
 RUN npm run build
 CMD ["npm","run","start:dev"]
+
+FROM redis:7.4-alpine AS redis
+RUN apk add --no-cache gettext

@@ -1,4 +1,4 @@
-import { INestApplication, Module } from '@nestjs/common';
+import { Global, INestApplication, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -6,17 +6,31 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceOptions } from './config/app-data-source';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
+import { RoleModule } from './role/role.module';
+import { AuthModule } from './auth/auth.module';
+import { AuthService } from './auth/auth.service';
+import { Auth } from './auth/entities/auth.entity';
+import { User } from './user/entities/user.entity';
+import { Role } from './role/entities/role.entity';
+import { RedisModule } from './redis/redis.module';
+import { UserService } from './user/user.service';
 
+@Global()
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
+    TypeOrmModule.forFeature([Auth, User, Role]),
     UserModule,
+    RoleModule,
+    AuthModule,
+    RedisModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AuthService, UserService],
+  exports: [TypeOrmModule],
 })
 export class AppModule {
   static setupSwagger(app: INestApplication): void {
@@ -35,6 +49,6 @@ export class AppModule {
       .build();
 
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
+    SwaggerModule.setup('api-document', app, document);
   }
 }

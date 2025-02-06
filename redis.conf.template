@@ -1,0 +1,3 @@
+requirepass $REDIS_PASS
+
+user $REDIS_USER on >$REDIS_PASS allcommands allkeys

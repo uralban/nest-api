@@ -9,18 +9,20 @@ import {
   HttpStatus,
   HttpCode,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from '../global/dto/user/create-user.dto';
+import { UpdateUserDto } from '../global/dto/user/update-user.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
 import { DeleteResultMessage } from '../global/interfaces/delete-result-message';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
+import { AuthGuard } from '../auth/auth.guard';
 
 @ApiTags('User')
-@Controller('user')
+@Controller('api/user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -37,7 +39,8 @@ export class UserController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  public async createUser(@Body() createUserDto: CreateUserDto) {
+  @UseGuards(AuthGuard)
+  public async createUser(@Body() createUserDto: CreateUserDto): Promise<void> {
     return this.userService.createUser(createUserDto);
   }
 
@@ -52,6 +55,7 @@ export class UserController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request',
   })
+  @UseGuards(AuthGuard)
   public async getAllUsers(
     @Query() pageOptionsDto: PaginationOptionsDto,
   ): Promise<PaginationDto<User>> {
@@ -74,8 +78,31 @@ export class UserController {
     status: HttpStatus.NOT_FOUND,
     description: 'User not found.',
   })
+  @UseGuards(AuthGuard)
   public async getUserById(@Param('id') id: string): Promise<User> {
     return await this.userService.getUserById(id);
+  }
+
+  @Get('check-email-exist/:email')
+  @ApiOperation({ summary: 'Check free email.' })
+  @ApiParam({
+    name: 'email',
+    description: 'The email of the user to get.',
+    example: 'example@email.com',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The email status',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Bad request.',
+  })
+  @UseGuards(AuthGuard)
+  public async getCheckEmailExist(
+    @Param('email') email: string,
+  ): Promise<string> {
+    return await this.userService.getCheckEmailExist(email);
   }
 
   @Patch(':id')
@@ -98,10 +125,11 @@ export class UserController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
+  @UseGuards(AuthGuard)
   public async updateUserById(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
-  ) {
+  ): Promise<User> {
     return this.userService.updateUserById(id, updateUserDto);
   }
 
@@ -122,6 +150,7 @@ export class UserController {
     status: HttpStatus.NOT_FOUND,
     description: 'User not found.',
   })
+  @UseGuards(AuthGuard)
   public async removeUserById(
     @Param('id') id: string,
   ): Promise<DeleteResultMessage> {

@@ -19,6 +19,8 @@ services:
         condition: service_completed_successfully
       postgres-db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
   postgres-db:
     image: postgres:17.2-alpine3.21
@@ -39,6 +41,30 @@ services:
       timeout: 3s
       retries: 3
 
+  redis:
+    container_name: redis
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    restart: always
+    environment:
+      REDIS_PASS: ${REDIS_PASS}
+      REDIS_USER: ${REDIS_USER}
+    volumes:
+      - redis-data:/data
+      - ./redis.conf.template:/usr/local/etc/redis/redis.conf.template
+    command: >
+      sh -c "envsubst < /usr/local/etc/redis/redis.conf.template > /usr/local/etc/redis/redis.conf &&
+             redis-server /usr/local/etc/redis/redis.conf"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-u", "redis://${REDIS_USER}:${REDIS_PASS}@localhost:${REDIS_PORT}", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
   test:
     build:
       context: .
@@ -49,6 +75,8 @@ services:
     command: npm run test
     depends_on:
       postgres-db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   test-cov:
@@ -64,6 +92,8 @@ services:
     depends_on:
       postgres-db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
   test-e2e:
     build:
@@ -76,6 +106,9 @@ services:
     depends_on:
       postgres-db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   db_data:
+  redis-data:

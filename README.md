@@ -50,6 +50,16 @@ DB_PORT=5432
 
 CORS_ALLOWED_ORIGINS=http://localhost:4200 ;front will be should start on this host
 CORS_ALLOWED_METHODS=GET,HEAD,PUT,PATCH,POST,DELETE ;front will be should send only these types of request
+
+REDIS_HOST=redis ;redis settings
+REDIS_PORT=6379
+REDIS_PASS=pass
+REDIS_USER=alex
+
+AUTH0_DOMAIN=dev-ewvl3n56vjkfso0q.us.auth0.com ;auth0 settings
+AUTH0_AUDIENCE=https://dev-ewvl3n56vjkfso0q.us.auth0.com/api/v2/
+
+JWT_SECRET=u82eC7LWx9Z53F4C8pL5XeGq78TnF5fUwNnRvK4+qZx1aP1dF3QvV1x5QnW ;jwt secret key
 ```
 
 ### Build and start application

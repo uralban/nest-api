@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto } from '../global/dto/user/create-user.dto';
 import { User } from './entities/user.entity';
-import { Role } from './entities/role.entity';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { Role } from '../role/entities/role.entity';
+import { UpdateUserDto } from '../global/dto/user/update-user.dto';
 import { NotFoundException } from '@nestjs/common';
 import { DeleteResultMessage } from '../global/interfaces/delete-result-message';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
@@ -63,7 +63,6 @@ describe('UserController', () => {
         lastName: 'Doe',
         emailLogin: 'example@gmail.com',
         passHash: 'hashedpassword',
-        token: '',
         createdAt: new Date(),
         updatedAt: new Date(),
         role: mockRole,
@@ -96,7 +95,6 @@ describe('UserController', () => {
         lastName: 'Doe',
         emailLogin: 'example@gmail.com',
         passHash: 'hashedpassword',
-        token: '',
         createdAt: new Date(),
         updatedAt: new Date(),
         role: mockRole,
@@ -178,7 +176,6 @@ describe('UserController', () => {
           lastName: 'Doe',
           emailLogin: 'example@gmail.com',
           passHash: 'hashedpassword',
-          token: '',
           createdAt: new Date(),
           updatedAt: new Date(),
           role: mockRole,
@@ -223,7 +220,6 @@ describe('UserController', () => {
         lastName: 'Doe',
         emailLogin: 'example@gmail.com',
         passHash: 'hashedpassword',
-        token: '',
         createdAt: new Date(),
         updatedAt: new Date(),
         role: mockRole,

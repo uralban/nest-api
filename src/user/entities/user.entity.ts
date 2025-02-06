@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
-import { Role } from './role.entity';
+import { Role } from '../../role/entities/role.entity';
 import { BaseCustomEntity } from '../../global/entities/base-custom.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
@@ -25,11 +25,6 @@ export class User extends BaseCustomEntity {
   @Column('varchar', { length: 60 })
   @Exclude()
   passHash: string;
-
-  @ApiProperty({ description: 'Token, do not used at the moment' })
-  @Column('varchar', { length: 200 })
-  @Exclude()
-  token: string;
 
   @ApiProperty({ description: 'Role of the user', type: () => Role })
   @ManyToOne(() => Role, role => role.roleName)

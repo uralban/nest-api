@@ -1,6 +1,6 @@
 import { Seeder, SeederFactoryManager } from 'typeorm-extension';
 import { DataSource, Repository } from 'typeorm';
-import { Role } from '../../user/entities/role.entity';
+import { Role } from '../../role/entities/role.entity';
 import { User } from '../../user/entities/user.entity';
 
 export default class UserSeeder implements Seeder {
@@ -28,7 +28,6 @@ export default class UserSeeder implements Seeder {
         lastName: (await (await factoryManager.get(User)).make()).lastName,
         emailLogin: (await (await factoryManager.get(User)).make()).emailLogin,
         passHash: 'password',
-        token: '',
         createdAt: (await (await factoryManager.get(User)).make()).createdAt,
         updatedAt: new Date(),
         role: adminRole,
@@ -39,7 +38,6 @@ export default class UserSeeder implements Seeder {
         lastName: (await (await factoryManager.get(User)).make()).lastName,
         emailLogin: (await (await factoryManager.get(User)).make()).emailLogin,
         passHash: 'password',
-        token: '',
         createdAt: (await (await factoryManager.get(User)).make()).createdAt,
         updatedAt: new Date(),
         role: userRole,
@@ -50,7 +48,6 @@ export default class UserSeeder implements Seeder {
         lastName: (await (await factoryManager.get(User)).make()).lastName,
         emailLogin: (await (await factoryManager.get(User)).make()).emailLogin,
         passHash: 'password',
-        token: '',
         createdAt: (await (await factoryManager.get(User)).make()).createdAt,
         updatedAt: new Date(),
         role: userRole,

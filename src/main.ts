@@ -14,7 +14,7 @@ async function bootstrap() {
     preflightContinue: false,
     optionsSuccessStatus: 204,
     credentials: true,
-    allowedHeaders: 'Authorization, x-id-token, content-type',
+    allowedHeaders: 'Authorization, content-type',
   });
 
   app.setGlobalPrefix('api');

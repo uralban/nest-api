@@ -38,4 +38,10 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'Role id should not be empty' })
   @IsString({ message: 'Role id should be a string' })
   roleId?: string;
+
+  @ApiProperty({ description: 'Avatar url' })
+  @IsOptional()
+  @Type(() => String)
+  @IsString({ message: 'Avatar url should be a string' })
+  avatarUrl?: string;
 }

@@ -10,8 +10,9 @@ import { AuthService } from './auth.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from '../user/entities/user.entity';
 import { AuthGuard } from './auth.guard';
-import { AuthTokens } from '../global/decorators/auth-tokens.decorator';
-import { TokenSet } from '../global/interfaces/token-set';
+import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
+import { GetUserGivenName } from '../global/decorators/get-user-given-name.decorator';
+import { GetUserFamilyName } from '../global/decorators/get-user-family-name.decorator';
 
 @ApiTags('Me')
 @Controller('me')
@@ -31,12 +32,14 @@ export class AuthMeController {
   @UseGuards(AuthGuard)
   @UseInterceptors(ClassSerializerInterceptor)
   public async getUserAfterLogin(
-    @AuthTokens() tokens: TokenSet,
+    @GetUserEmail() email: string,
+    @GetUserGivenName() givenName: string,
+    @GetUserFamilyName() familyName: string,
   ): Promise<User> {
-    if (tokens.accessToken)
-      return await this.authService.getUserAfterLoginByLocal(
-        tokens.accessToken,
-      );
-    return await this.authService.getUserAfterLoginByAuth0(tokens.idToken);
+    return await this.authService.getUserAfterLogin(
+      email,
+      givenName,
+      familyName,
+    );
   }
 }

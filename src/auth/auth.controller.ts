@@ -12,7 +12,7 @@ import { LoginDto } from '../global/dto/login.dto';
 import { TokenSet } from '../global/interfaces/token-set';
 import { AuthGuard } from './auth.guard';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthTokens } from '../global/decorators/auth-tokens.decorator';
+import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
 
 @ApiTags('Authorization')
 @Controller('auth')
@@ -51,10 +51,10 @@ export class AuthController {
   })
   @UseGuards(AuthGuard)
   public async logout(
-    @AuthTokens() tokens: TokenSet,
+    @GetUserEmail() email: string,
     @Res() response: Response,
   ): Promise<Response> {
-    await this.authService.logoutUser(tokens.accessToken);
+    await this.authService.logoutUser(email);
     response.clearCookie('access_token');
     response.clearCookie('refresh_token');
     return response.send({});

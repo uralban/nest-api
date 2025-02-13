@@ -11,7 +11,7 @@ export class Auth extends BaseCustomEntity {
   refreshToken: string;
 
   @ApiProperty({ description: 'User', type: () => User })
-  @OneToOne(() => User, user => user.emailLogin)
+  @OneToOne(() => User, user => user.emailLogin, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userEmail', referencedColumnName: 'emailLogin' })
   @Exclude()
   user: Relation<User>;

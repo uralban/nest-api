@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from '../global/dto/user/create-user.dto';
 import { UpdateUserDto } from '../global/dto/user/update-user.dto';
 import { Repository, SelectQueryBuilder } from 'typeorm';
@@ -23,11 +18,6 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
-import { TokenSet } from '../global/interfaces/token-set';
-import { CustomTokenPayload } from '../global/interfaces/custom-token-payload';
-import { LocalJwtService } from '../auth/local-jwt.service';
-import { AuthService } from '../auth/auth.service';
-import { AuthUserDto } from '../global/dto/user/auth-user.dto';
 
 @Injectable()
 export class UserService {
@@ -42,8 +32,6 @@ export class UserService {
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
     private configService: ConfigService,
-    private localJwtService: LocalJwtService,
-    private authService: AuthService,
   ) {
     this.s3 = new S3Client({
       region: this.configService.get('AWS_REGION'),
@@ -80,6 +68,7 @@ export class UserService {
       ...userData,
       passHash: hashedPassword,
       role: userRole,
+      avatarUrl: '',
     });
 
     this.logger.log('Saving the new user to the database.');
@@ -171,22 +160,12 @@ export class UserService {
   }
 
   public async updateUserById(
-    id: string,
-    authTokens: TokenSet,
+    email: string,
     updateUserDto: UpdateUserDto,
     file?: Express.Multer.File,
   ): Promise<User> {
     this.logger.log('Attempting to update user.');
-
-    const user: User = await this.getUserById(id);
-
-    if (!this.checkEmailMatch(user.emailLogin, authTokens)) {
-      this.logger.error('Authorization email is not match.');
-      throw new UnauthorizedException(
-        'Authorization failed for deleting this user.',
-      );
-    }
-
+    const user: User = await this.getUserByEmail(email);
     if (file) {
       updateUserDto.avatarUrl = await this.uploadFileToS3(file);
     }
@@ -200,53 +179,24 @@ export class UserService {
     this.logger.log('Saving the new user to the database.');
     try {
       const updatedUser: User = await this.userRepository.save(user);
-      this.logger.log(`Successfully updated user with ID: ${id}.`);
+      this.logger.log(`Successfully updated user ${email}.`);
       return updatedUser;
     } catch (error) {
-      this.logger.error(`Failed to update user with ID ${id}`, error.stack);
+      this.logger.error(`Failed to update user ${email}`, error.stack);
     }
   }
 
-  public async removeUserById(
-    id: string,
-    authTokens: TokenSet,
-  ): Promise<ResultMessage> {
-    this.logger.log(`Deleting user by id ${id}.`);
-
-    const user: User = await this.getUserById(id);
-
-    if (!this.checkEmailMatch(user.emailLogin, authTokens)) {
-      this.logger.error('Authorization email is not match.');
-      throw new UnauthorizedException(
-        'Authorization failed for deleting this user.',
-      );
-    }
-
+  public async removeUser(email: string): Promise<ResultMessage> {
+    this.logger.log(`Deleting user ${email}.`);
+    const user: User = await this.getUserByEmail(email);
     try {
       await this.userRepository.remove(user);
       this.logger.log('Successfully removed user from the database.');
       return {
         message: `The user was successfully deleted.`,
-        executedId: id,
       };
     } catch (error) {
       this.logger.error(`Failed to remove user from the database`, error.stack);
     }
-  }
-
-  private checkEmailMatch(email: string, authTokens: TokenSet): boolean {
-    let emailFromRequest: string;
-    if (authTokens.accessToken) {
-      const payload: CustomTokenPayload = this.localJwtService.verifyAccess(
-        authTokens.accessToken,
-      );
-      emailFromRequest = payload.email;
-    } else {
-      const authUserDTo: AuthUserDto = this.authService.decodeLocalToken(
-        authTokens.idToken,
-      );
-      emailFromRequest = authUserDTo.email;
-    }
-    return email === emailFromRequest;
   }
 }

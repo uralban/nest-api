@@ -45,7 +45,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
       if (!accessTokenIsValid) {
         throw new UnauthorizedException('Authorization failed 1');
       }
-      return true;
+      return payload;
     } catch (error) {
       this.logger.error('Authorization failed.6 ', error);
       if (!refreshToken) {

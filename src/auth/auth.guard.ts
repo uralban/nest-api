@@ -7,6 +7,6 @@ export class AuthGuard extends AuthPassportGuard(['jwt', 'local']) {
     if (user) {
       return user;
     }
-    throw err || new UnauthorizedException(info);
+    throw err || new UnauthorizedException(info.message);
   }
 }

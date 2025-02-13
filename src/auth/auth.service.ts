@@ -10,14 +10,12 @@ import { Auth } from './entities/auth.entity';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
 import { User } from '../user/entities/user.entity';
-import { AuthUserDto } from '../global/dto/user/auth-user.dto';
 import { Role } from '../role/entities/role.entity';
 import { CreateUserDto } from '../global/dto/user/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { TokenSet } from '../global/interfaces/token-set';
 import { LoginDto } from '../global/dto/login.dto';
 import { LocalJwtService } from './local-jwt.service';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -31,7 +29,6 @@ export class AuthService {
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
     private redisService: RedisService,
-    private auth0JwtService: JwtService,
     private localJwtService: LocalJwtService,
   ) {}
 
@@ -113,8 +110,7 @@ export class AuthService {
     return { accessToken: accessToken, refreshToken: refreshToken };
   }
 
-  public async logoutUser(token: string): Promise<void> {
-    const email: string = this.decodeLocalToken(token).email;
+  public async logoutUser(email: string): Promise<void> {
     await this.deleteAccessToken(email);
     await this.deleteRefreshToken(email);
   }
@@ -157,8 +153,7 @@ export class AuthService {
       },
     });
     if (!auth) {
-      this.logger.error('Refresh token not found.1');
-      throw new NotFoundException(`User has not any refresh token.`);
+      this.logger.warn('Refresh token not found.1');
     } else {
       await this.refreshTokenRepository.remove(auth);
     }
@@ -175,45 +170,15 @@ export class AuthService {
     return user;
   }
 
-  private decodeAuth0Token(token: string): AuthUserDto {
-    try {
-      return this.auth0JwtService.decode(token);
-    } catch (error) {
-      this.logger.error('Decode token error. ', error);
-      return null;
-    }
-  }
-
-  public decodeLocalToken(token: string): AuthUserDto {
-    try {
-      return this.localJwtService.decode(token);
-    } catch (error) {
-      this.logger.error('Decode token error. ', error);
-      return null;
-    }
-  }
-
-  public async getUserAfterLoginByLocal(token: string): Promise<User> {
-    if (!token) {
-      this.logger.error('Token not provided.');
-      throw new Error('Token not provided');
-    }
-    return this.getUserAfterLogin(this.decodeAuth0Token(token));
-  }
-
-  public async getUserAfterLoginByAuth0(token: string): Promise<User> {
-    if (!token) {
-      this.logger.error('Token not provided.');
-      throw new Error('Token not provided');
-    }
-    return this.getUserAfterLogin(this.decodeLocalToken(token));
-  }
-
-  public async getUserAfterLogin(decodedToken: AuthUserDto): Promise<User> {
+  public async getUserAfterLogin(
+    email: string,
+    givenName: string,
+    familyName: string,
+  ): Promise<User> {
     this.logger.log('Check user exist.');
     const user: User = await this.userRepository.findOne({
       where: {
-        emailLogin: decodedToken.email ? decodedToken.email : decodedToken.sub,
+        emailLogin: email,
       },
       relations: {
         role: true,
@@ -222,10 +187,11 @@ export class AuthService {
     if (!user) {
       this.logger.warn('User not exist, adding user to the database.');
       const createUser: CreateUserDto = {
-        emailLogin: decodedToken.email,
-        firstName: decodedToken.given_name,
-        lastName: decodedToken.family_name,
+        emailLogin: email,
+        firstName: givenName,
+        lastName: familyName,
         password: '',
+        avatarUrl: '',
       };
       return this.createNewUserByAuth0(createUser);
     } else {

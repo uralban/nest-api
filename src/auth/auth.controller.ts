@@ -3,7 +3,6 @@ import {
   Controller,
   HttpStatus,
   Post,
-  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -13,6 +12,7 @@ import { LoginDto } from '../global/dto/login.dto';
 import { TokenSet } from '../global/interfaces/token-set';
 import { AuthGuard } from './auth.guard';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthTokens } from '../global/decorators/auth-tokens.decorator';
 
 @ApiTags('Authorization')
 @Controller('auth')
@@ -51,10 +51,10 @@ export class AuthController {
   })
   @UseGuards(AuthGuard)
   public async logout(
-    @Req() request,
+    @AuthTokens() tokens: TokenSet,
     @Res() response: Response,
   ): Promise<Response> {
-    await this.authService.logoutUser(request.cookies?.access_token);
+    await this.authService.logoutUser(tokens.accessToken);
     response.clearCookie('access_token');
     response.clearCookie('refresh_token');
     return response.send({});

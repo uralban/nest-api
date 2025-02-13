@@ -1,5 +1,6 @@
 import { CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class BaseCustomEntity {
@@ -15,6 +16,7 @@ export class BaseCustomEntity {
     example: '2025-01-01 05:07:27.800000',
   })
   @CreateDateColumn()
+  @Exclude()
   createdAt: Date;
 
   @ApiProperty({
@@ -22,5 +24,6 @@ export class BaseCustomEntity {
     example: '2025-01-01 05:07:27.800000',
   })
   @CreateDateColumn()
+  @Exclude()
   updatedAt: Date;
 }

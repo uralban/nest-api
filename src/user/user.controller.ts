@@ -10,16 +10,23 @@ import {
   HttpCode,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from '../global/dto/user/create-user.dto';
 import { UpdateUserDto } from '../global/dto/user/update-user.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
-import { DeleteResultMessage } from '../global/interfaces/delete-result-message';
+import { ResultMessage } from '../global/interfaces/result-message';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { AuthTokens } from '../global/decorators/auth-tokens.decorator';
+import { TokenSet } from '../global/interfaces/token-set';
+import { ParseJsonPipe } from '../global/pipes/parse-json.pipe';
 
 @ApiTags('User')
 @Controller('user')
@@ -39,7 +46,6 @@ export class UserController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @UseGuards(AuthGuard)
   public async createUser(@Body() createUserDto: CreateUserDto): Promise<void> {
     return this.userService.createUser(createUserDto);
   }
@@ -56,6 +62,7 @@ export class UserController {
     description: 'Bad request',
   })
   @UseGuards(AuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
   public async getAllUsers(
     @Query() pageOptionsDto: PaginationOptionsDto,
   ): Promise<PaginationDto<User>> {
@@ -79,6 +86,7 @@ export class UserController {
     description: 'User not found.',
   })
   @UseGuards(AuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
   public async getUserById(@Param('id') id: string): Promise<User> {
     return await this.userService.getUserById(id);
   }
@@ -98,7 +106,6 @@ export class UserController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @UseGuards(AuthGuard)
   public async getCheckEmailExist(
     @Param('email') email: string,
   ): Promise<string> {
@@ -126,11 +133,16 @@ export class UserController {
     description: 'Bad request.',
   })
   @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(ClassSerializerInterceptor)
   public async updateUserById(
     @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
+    @AuthTokens() tokens: TokenSet,
+    @Body('userData', new ParseJsonPipe(UpdateUserDto))
+    updateUserDto: UpdateUserDto,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<User> {
-    return this.userService.updateUserById(id, updateUserDto);
+    return this.userService.updateUserById(id, tokens, updateUserDto, file);
   }
 
   @Delete(':id')
@@ -153,7 +165,8 @@ export class UserController {
   @UseGuards(AuthGuard)
   public async removeUserById(
     @Param('id') id: string,
-  ): Promise<DeleteResultMessage> {
-    return this.userService.removeUserById(id);
+    @AuthTokens() tokens: TokenSet,
+  ): Promise<ResultMessage> {
+    return this.userService.removeUserById(id, tokens);
   }
 }

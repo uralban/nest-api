@@ -121,15 +121,13 @@ export class AuthService {
 
   private async getAuthDataByEmail(userEmail: string): Promise<Auth> {
     const auth: Auth = await this.refreshTokenRepository.findOne({
-      where: {
-        user: await this.getUserByEmail(userEmail),
-      },
+      where: { user: { emailLogin: userEmail } },
       relations: {
         user: true,
       },
     });
     if (!auth) {
-      this.logger.error('Refresh token not found.');
+      this.logger.error('Refresh token not found.2');
       throw new NotFoundException(`User has not any refresh token.`);
     } else {
       return auth;
@@ -159,7 +157,7 @@ export class AuthService {
       },
     });
     if (!auth) {
-      this.logger.error('Refresh token not found.');
+      this.logger.error('Refresh token not found.1');
       throw new NotFoundException(`User has not any refresh token.`);
     } else {
       await this.refreshTokenRepository.remove(auth);
@@ -172,7 +170,7 @@ export class AuthService {
     });
     if (!user) {
       this.logger.error(`User with ${userEmail} email not found.`);
-      throw new Error('User not found.');
+      throw new UnauthorizedException('User not found.');
     }
     return user;
   }
@@ -186,7 +184,7 @@ export class AuthService {
     }
   }
 
-  private decodeLocalToken(token: string): AuthUserDto {
+  public decodeLocalToken(token: string): AuthUserDto {
     try {
       return this.localJwtService.decode(token);
     } catch (error) {

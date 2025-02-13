@@ -1,8 +1,17 @@
-import { Controller, Get, HttpStatus, Req, UseGuards } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  HttpStatus,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from '../user/entities/user.entity';
 import { AuthGuard } from './auth.guard';
+import { AuthTokens } from '../global/decorators/auth-tokens.decorator';
+import { TokenSet } from '../global/interfaces/token-set';
 
 @ApiTags('Me')
 @Controller('me')
@@ -20,13 +29,14 @@ export class AuthMeController {
     description: 'Bad request',
   })
   @UseGuards(AuthGuard)
-  public async getUserAfterLogin(@Req() request): Promise<User> {
-    if (request.cookies?.access_token)
+  @UseInterceptors(ClassSerializerInterceptor)
+  public async getUserAfterLogin(
+    @AuthTokens() tokens: TokenSet,
+  ): Promise<User> {
+    if (tokens.accessToken)
       return await this.authService.getUserAfterLoginByLocal(
-        request.cookies?.access_token,
+        tokens.accessToken,
       );
-    return await this.authService.getUserAfterLoginByAuth0(
-      request.headers['x-id-token'],
-    );
+    return await this.authService.getUserAfterLoginByAuth0(tokens.idToken);
   }
 }

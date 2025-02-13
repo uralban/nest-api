@@ -1,4 +1,10 @@
-import { Controller, Get, HttpStatus } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  HttpStatus,
+  UseInterceptors,
+} from '@nestjs/common';
 import { RoleService } from './role.service';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Role } from './entities/role.entity';
@@ -19,6 +25,7 @@ export class RoleController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request',
   })
+  @UseInterceptors(ClassSerializerInterceptor)
   public async getAllRoles(): Promise<Role[]> {
     return await this.roleService.getAllRoles();
   }

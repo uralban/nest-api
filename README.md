@@ -59,9 +59,14 @@ REDIS_USER
 AUTH0_DOMAIN ;auth0 settings
 AUTH0_AUDIENCE
 
-JWT_SECRET_AUTH0 ;jwt secret keyы
+JWT_SECRET_AUTH0 ;jwt secret keys
 JWT_SECRET_LOCAL_ACCESS
 JWT_SECRET_LOCAL_REFRESH
+
+AWS_REGION  ;aws bucket settings
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+AWS_S3_BUCKET
 ```
 
 ### Build and start application

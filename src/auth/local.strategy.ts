@@ -21,7 +21,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: Request) => request.cookies['access_token'],
       ]),
-      ignoreExpiration: false,
+      ignoreExpiration: true,
       secretOrKey: process.env.JWT_SECRET_LOCAL_ACCESS,
       passReqToCallback: true,
     });
@@ -43,13 +43,13 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
       const accessTokenIsValid: boolean =
         await this.authService.validateAccessToken(payload.email, accessToken);
       if (!accessTokenIsValid) {
-        throw new UnauthorizedException('Authorization failed');
+        throw new UnauthorizedException('Authorization failed 1');
       }
-      return true;
+      return payload;
     } catch (error) {
-      this.logger.error('Authorization failed. ', error);
+      this.logger.error('Authorization failed.6 ', error);
       if (!refreshToken) {
-        throw new UnauthorizedException('Authorization failed');
+        throw new UnauthorizedException('Authorization failed 2');
       }
     }
 
@@ -66,7 +66,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
         );
 
       if (!refreshTokenIsValid) {
-        throw new UnauthorizedException('Authorization failed');
+        throw new UnauthorizedException('Authorization failed 3');
       }
 
       const newAccessToken: string = this.localJwtService.signAccess(
@@ -90,8 +90,8 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
       request.user = { email: user.emailLogin };
       return refreshPayload;
     } catch (error) {
-      this.logger.error('Authorization failed. ', error);
-      throw new UnauthorizedException('Authorization failed');
+      this.logger.error('Authorization failed. 4', error);
+      throw new UnauthorizedException('Authorization failed 5');
     }
   }
 }

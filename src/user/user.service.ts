@@ -5,24 +5,44 @@ import { Repository, SelectQueryBuilder } from 'typeorm';
 import { User } from './entities/user.entity';
 import { AppService } from '../app.service';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResultMessage } from '../global/interfaces/delete-result-message';
+import { ResultMessage } from '../global/interfaces/result-message';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../role/entities/role.entity';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
+import { v4 as uuidv4 } from 'uuid';
+import {
+  PutObjectCommand,
+  PutObjectCommandInput,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
   private readonly logger: Logger = new Logger(AppService.name);
   private readonly saltOrRounds: string | number = 10;
+  private s3: S3Client;
+  private bucketName: string;
 
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
-  ) {}
+    private configService: ConfigService,
+  ) {
+    this.s3 = new S3Client({
+      region: this.configService.get('AWS_REGION'),
+      credentials: {
+        accessKeyId: this.configService.get('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY'),
+      },
+    });
+
+    this.bucketName = this.configService.get('AWS_S3_BUCKET');
+  }
 
   public async createUser(createUserDto: CreateUserDto): Promise<void> {
     this.logger.log('Attempting to create a new user.');
@@ -48,6 +68,7 @@ export class UserService {
       ...userData,
       passHash: hashedPassword,
       role: userRole,
+      avatarUrl: '',
     });
 
     this.logger.log('Saving the new user to the database.');
@@ -65,12 +86,11 @@ export class UserService {
   ): Promise<PaginationDto<User>> {
     const queryBuilder: SelectQueryBuilder<User> =
       this.userRepository.createQueryBuilder('user');
-
     queryBuilder
       .leftJoinAndSelect('user.role', 'role')
       .orderBy('user.createdAt', pageOptionsDto.order)
       .skip(pageOptionsDto.skip)
-      .take(pageOptionsDto.take);
+      .take(+pageOptionsDto.take);
 
     const itemCount: number = await queryBuilder.getCount();
     const { entities } = await queryBuilder.getRawAndEntities();
@@ -125,13 +145,30 @@ export class UserService {
     return user ? 'emailExist' : 'emailNotExist';
   }
 
-  public async updateUserById(
-    id: string,
-    updateUserDto: UpdateUserDto,
-  ): Promise<User> {
-    this.logger.log('Attempting to create a new user.');
+  public async uploadFileToS3(file: Express.Multer.File): Promise<string> {
+    const fileKey = `avatars/${uuidv4()}-${file.originalname}`;
+    const params: PutObjectCommandInput = {
+      Bucket: this.bucketName,
+      Key: fileKey,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      ACL: 'public-read',
+    };
+    await this.s3.send(new PutObjectCommand(params));
 
-    const user: User = await this.getUserById(id);
+    return `https://${this.bucketName}.s3.${this.configService.get('AWS_REGION')}.amazonaws.com/${fileKey}`;
+  }
+
+  public async updateUserById(
+    email: string,
+    updateUserDto: UpdateUserDto,
+    file?: Express.Multer.File,
+  ): Promise<User> {
+    this.logger.log('Attempting to update user.');
+    const user: User = await this.getUserByEmail(email);
+    if (file) {
+      updateUserDto.avatarUrl = await this.uploadFileToS3(file);
+    }
     const { password, ...newUserData } = updateUserDto;
     if (password) {
       user.passHash = await bcrypt.hash(password, this.saltOrRounds);
@@ -142,23 +179,21 @@ export class UserService {
     this.logger.log('Saving the new user to the database.');
     try {
       const updatedUser: User = await this.userRepository.save(user);
-      this.logger.log(`Successfully updated user with ID: ${id}.`);
+      this.logger.log(`Successfully updated user ${email}.`);
       return updatedUser;
     } catch (error) {
-      this.logger.error(`Failed to update user with ID ${id}`, error.stack);
+      this.logger.error(`Failed to update user ${email}`, error.stack);
     }
   }
 
-  public async removeUserById(id: string): Promise<DeleteResultMessage> {
-    this.logger.log(`Deleting user by id ${id}.`);
-
-    const user: User = await this.getUserById(id);
+  public async removeUser(email: string): Promise<ResultMessage> {
+    this.logger.log(`Deleting user ${email}.`);
+    const user: User = await this.getUserByEmail(email);
     try {
       await this.userRepository.remove(user);
       this.logger.log('Successfully removed user from the database.');
       return {
-        message: `User with ID ${id} successfully deleted.`,
-        deletedId: id,
+        message: `The user was successfully deleted.`,
       };
     } catch (error) {
       this.logger.error(`Failed to remove user from the database`, error.stack);

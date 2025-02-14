@@ -10,16 +10,22 @@ import {
   HttpCode,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from '../global/dto/user/create-user.dto';
 import { UpdateUserDto } from '../global/dto/user/update-user.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
-import { DeleteResultMessage } from '../global/interfaces/delete-result-message';
+import { ResultMessage } from '../global/interfaces/result-message';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { AuthGuard } from '../auth/auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ParseJsonPipe } from '../global/pipes/parse-json.pipe';
+import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
 
 @ApiTags('User')
 @Controller('user')
@@ -39,7 +45,6 @@ export class UserController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @UseGuards(AuthGuard)
   public async createUser(@Body() createUserDto: CreateUserDto): Promise<void> {
     return this.userService.createUser(createUserDto);
   }
@@ -56,6 +61,7 @@ export class UserController {
     description: 'Bad request',
   })
   @UseGuards(AuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
   public async getAllUsers(
     @Query() pageOptionsDto: PaginationOptionsDto,
   ): Promise<PaginationDto<User>> {
@@ -79,6 +85,7 @@ export class UserController {
     description: 'User not found.',
   })
   @UseGuards(AuthGuard)
+  @UseInterceptors(ClassSerializerInterceptor)
   public async getUserById(@Param('id') id: string): Promise<User> {
     return await this.userService.getUserById(id);
   }
@@ -98,20 +105,14 @@ export class UserController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @UseGuards(AuthGuard)
   public async getCheckEmailExist(
     @Param('email') email: string,
   ): Promise<string> {
     return await this.userService.getCheckEmailExist(email);
   }
 
-  @Patch(':id')
+  @Patch()
   @ApiOperation({ summary: 'Update an existing user.' })
-  @ApiParam({
-    name: 'id',
-    description: 'The ID of the user to update.',
-    example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
-  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The user has been successfully updated.',
@@ -126,21 +127,20 @@ export class UserController {
     description: 'Bad request.',
   })
   @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(ClassSerializerInterceptor)
   public async updateUserById(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
+    @GetUserEmail() email: string,
+    @Body('userData', new ParseJsonPipe(UpdateUserDto))
+    updateUserDto: UpdateUserDto,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<User> {
-    return this.userService.updateUserById(id, updateUserDto);
+    return this.userService.updateUserById(email, updateUserDto, file);
   }
 
-  @Delete(':id')
+  @Delete()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete the user by id.' })
-  @ApiParam({
-    name: 'id',
-    description: 'The ID of the user to delete.',
-    example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
-  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The user has been successfully deleted.',
@@ -152,8 +152,8 @@ export class UserController {
   })
   @UseGuards(AuthGuard)
   public async removeUserById(
-    @Param('id') id: string,
-  ): Promise<DeleteResultMessage> {
-    return this.userService.removeUserById(id);
+    @GetUserEmail() email: string,
+  ): Promise<ResultMessage> {
+    return this.userService.removeUser(email);
   }
 }

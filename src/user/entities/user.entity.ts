@@ -21,6 +21,12 @@ export class User extends BaseCustomEntity {
   @Column('varchar', { length: 200, unique: true })
   emailLogin: string;
 
+  @ApiProperty({
+    description: 'Avatar url of the user',
+  })
+  @Column('varchar')
+  avatarUrl: string;
+
   @ApiProperty({ description: 'Hashed password of the user' })
   @Column('varchar', { length: 60 })
   @Exclude()

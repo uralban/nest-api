@@ -11,10 +11,10 @@ import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
 import { User } from '../user/entities/user.entity';
 import { Role } from '../role/entities/role.entity';
-import { CreateUserDto } from '../global/dto/user/create-user.dto';
+import { CreateUserDto } from '../user/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { TokenSet } from '../global/interfaces/token-set';
-import { LoginDto } from '../global/dto/login.dto';
+import { LoginDto } from './dto/login.dto';
 import { LocalJwtService } from './local-jwt.service';
 
 @Injectable()

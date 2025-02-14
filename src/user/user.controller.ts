@@ -15,8 +15,8 @@ import {
   ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from '../global/dto/user/create-user.dto';
-import { UpdateUserDto } from '../global/dto/user/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { User } from './entities/user.entity';
 import { ResultMessage } from '../global/interfaces/result-message';
@@ -140,7 +140,7 @@ export class UserController {
 
   @Delete()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Delete the user by id.' })
+  @ApiOperation({ summary: 'Delete the user by email.' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The user has been successfully deleted.',

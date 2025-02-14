@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { Visibility } from '../../global/enums/visibility.enum';
 
 export class CreateCompanyDto {
   @ApiProperty({ description: 'Company name', example: 'Company' })
@@ -21,11 +22,13 @@ export class CreateCompanyDto {
   logoUrl?: string;
 
   @ApiProperty({
-    description: 'Visibility id',
-    example: 'fd411357-18bb-4bbd-969d-7b1f05b60df5',
+    description: 'Visibility',
+    example: 'hidden',
   })
   @Type(() => String)
-  @IsNotEmpty({ message: 'Visibility Id should not be empty' })
-  @IsString({ message: 'Visibility Id should be a string' })
-  visibilityId?: string;
+  @IsNotEmpty({ message: 'Visibility should not be empty' })
+  @IsEnum(Visibility, {
+    message: 'Visibility Id should be either "visible" or "hidden"',
+  })
+  visibility?: string;
 }

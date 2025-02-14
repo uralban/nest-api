@@ -1,8 +1,8 @@
 import { BaseCustomEntity } from '../../global/entities/base-custom.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
-import { Visibility } from '../../visibility/entity/visibility.entity';
 import { User } from '../../user/entities/user.entity';
+import { Visibility } from '../../global/enums/visibility.enum';
 
 @Entity()
 export class Company extends BaseCustomEntity {
@@ -20,13 +20,15 @@ export class Company extends BaseCustomEntity {
   @Column('varchar')
   logoUrl: string;
 
-  @ApiProperty({ description: 'Company visibility', type: () => Visibility })
-  @ManyToOne(() => Visibility, visibility => visibility.visibilityName)
-  @JoinColumn({ name: 'visibilityId' })
-  visibility: Relation<Visibility>;
+  @Column({
+    type: 'enum',
+    enum: Visibility,
+    default: Visibility.HIDDEN,
+  })
+  visibility: string;
 
   @ApiProperty({ description: 'Owner', type: () => User })
   @ManyToOne(() => User, user => user.emailLogin, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'userEmailLogin' })
   user: Relation<User>;
 }

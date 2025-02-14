@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { ResultMessage } from '../global/interfaces/result-message';
@@ -17,13 +12,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Company } from './entities/company.entity';
-import { Visibility } from '../visibility/entity/visibility.entity';
 import { v4 as uuidv4 } from 'uuid';
-import { User } from '../user/entities/user.entity';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
 import { UpdateCompanyVisibilityDto } from './dto/update-company-visibility.dto';
+import { Visibility } from '../global/enums/visibility.enum';
 
 @Injectable()
 export class CompanyService {
@@ -34,10 +28,6 @@ export class CompanyService {
   constructor(
     @InjectRepository(Company)
     private companyRepository: Repository<Company>,
-    @InjectRepository(Visibility)
-    private visibilityRepository: Repository<Visibility>,
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
     private configService: ConfigService,
   ) {
     this.s3 = new S3Client({
@@ -56,25 +46,9 @@ export class CompanyService {
   ): Promise<void> {
     this.logger.log('Attempting to create a new company.');
 
-    const { visibilityId, ...companyData } = createCompanyDto;
-
-    const companyVisibility: Visibility =
-      await this.getCompanyVisibilityById(visibilityId);
-    this.logger.log('Visibility status found for new company.');
-
-    const user: User = await this.userRepository.findOne({
-      where: { emailLogin: email },
-    });
-    if (!user) {
-      this.logger.error('User not found.');
-      throw new Error('User not found.');
-    }
-    this.logger.log('User found for new company.');
-
     const newCompany: Company = this.companyRepository.create({
-      ...companyData,
-      visibility: companyVisibility,
-      user: user,
+      ...createCompanyDto,
+      user: { emailLogin: email },
       logoUrl: '',
     });
 
@@ -88,20 +62,6 @@ export class CompanyService {
     }
   }
 
-  private async getCompanyVisibilityById(
-    visibilityId: string,
-  ): Promise<Visibility> {
-    const companyVisibility: Visibility =
-      await this.visibilityRepository.findOne({
-        where: { id: visibilityId },
-      });
-    if (!companyVisibility) {
-      this.logger.error('Visibility status not found.');
-      throw new Error('Visibility status not found.');
-    }
-    return companyVisibility;
-  }
-
   public async getAllCompanies(
     pageOptionsDto: PaginationOptionsDto,
     email: string,
@@ -109,10 +69,9 @@ export class CompanyService {
     const queryBuilder: SelectQueryBuilder<Company> =
       this.companyRepository.createQueryBuilder('company');
     queryBuilder
-      .leftJoinAndSelect('company.visibility', 'visibility')
       .leftJoinAndSelect('company.user', 'user')
       .where('user.emailLogin = :email', { email: email })
-      .orWhere('visibility.visibilityName = :visible', { visible: 'visible' })
+      .orWhere('visibility = :visible', { visible: Visibility.VISIBLE })
       .orderBy('company.createdAt', pageOptionsDto.order)
       .skip(pageOptionsDto.skip)
       .take(+pageOptionsDto.take);
@@ -123,7 +82,6 @@ export class CompanyService {
       paginationOptionsDto: pageOptionsDto,
       itemCount,
     });
-
     return new PaginationDto(entities, pageMetaDto);
   }
 
@@ -131,9 +89,9 @@ export class CompanyService {
     const company: Company = await this.companyRepository.findOne({
       where: {
         id: id,
+        user: { emailLogin: email },
       },
       relations: {
-        visibility: true,
         user: true,
       },
     });
@@ -141,12 +99,6 @@ export class CompanyService {
       this.logger.error('Company not found.');
       throw new NotFoundException(`Company not found.`);
     } else {
-      if (company.user.emailLogin !== email) {
-        this.logger.error('Only owner can to delete this company.');
-        throw new UnauthorizedException(
-          'Only owner can to delete this company.',
-        );
-      }
       return company;
     }
   }
@@ -162,14 +114,7 @@ export class CompanyService {
     if (file) {
       updateCompanyDto.logoUrl = await this.uploadFileToS3(file);
     }
-    const { visibilityId, ...newCompanyData } = updateCompanyDto;
-
-    const companyVisibility: Visibility =
-      await this.getCompanyVisibilityById(visibilityId);
-    this.logger.log('Visibility status found for new company.');
-
-    Object.assign(company, newCompanyData, { visibility: companyVisibility });
-
+    Object.assign(company, updateCompanyDto);
     this.logger.log('Saving the updated company to the database.');
     try {
       const updatedCompany: Company =
@@ -185,16 +130,12 @@ export class CompanyService {
     email: string,
     updateCompanyVisibilityDto: UpdateCompanyVisibilityDto,
   ): Promise<ResultMessage> {
-    this.logger.log('Attempting to update companies visibility.');
-    const newVisibility: Visibility = await this.getCompanyVisibilityById(
-      updateCompanyVisibilityDto.visibilityId,
-    );
     this.logger.log('Saving the updated company to the database.');
     try {
       await this.companyRepository
         .createQueryBuilder()
         .update(Company)
-        .set({ visibility: newVisibility })
+        .set({ visibility: updateCompanyVisibilityDto.visibility })
         .where('user.emailLogin = :email', { email })
         .execute();
       return { message: 'Update companies visibility status successfully.' };
@@ -226,7 +167,7 @@ export class CompanyService {
     }
   }
 
-  public async uploadFileToS3(file: Express.Multer.File): Promise<string> {
+  private async uploadFileToS3(file: Express.Multer.File): Promise<string> {
     const fileKey = `logo/${uuidv4()}-${file.originalname}`;
     const params: PutObjectCommandInput = {
       Bucket: this.bucketName,
@@ -238,5 +179,9 @@ export class CompanyService {
     await this.s3.send(new PutObjectCommand(params));
 
     return `https://${this.bucketName}.s3.${this.configService.get('AWS_REGION')}.amazonaws.com/${fileKey}`;
+  }
+
+  public getAllVisibilityStatuses(): string[] {
+    return [Visibility.VISIBLE, Visibility.HIDDEN];
   }
 }

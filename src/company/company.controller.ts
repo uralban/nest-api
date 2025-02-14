@@ -183,4 +183,18 @@ export class CompanyController {
   ): Promise<ResultMessage> {
     return this.companyService.removeCompanyById(email, id);
   }
+
+  @Get('visibility-statuses')
+  @ApiOperation({ summary: 'Get all visibility statuses.' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The list of visibility statuses.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Bad request',
+  })
+  public getAllVisibilityStatuses(): string[] {
+    return this.companyService.getAllVisibilityStatuses();
+  }
 }

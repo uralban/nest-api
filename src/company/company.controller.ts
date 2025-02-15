@@ -13,6 +13,8 @@ import {
   ClassSerializerInterceptor,
   UploadedFile,
   Query,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -23,7 +25,7 @@ import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
 import { ResultMessage } from '../global/interfaces/result-message';
 import { Company } from './entities/company.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ParseJsonPipe } from '../global/pipes/parse-json.pipe';
+import { ParseJsonPipeWithValidation } from '../global/pipes/parse-json-pipe-with-validation.service';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { UpdateCompanyVisibilityDto } from './dto/update-company-visibility.dto';
@@ -33,6 +35,20 @@ import { UpdateCompanyVisibilityDto } from './dto/update-company-visibility.dto'
 @UseGuards(AuthGuard)
 export class CompanyController {
   constructor(private readonly companyService: CompanyService) {}
+
+  @Get('visibility-statuses')
+  @ApiOperation({ summary: 'Get all visibility statuses.' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The list of visibility statuses.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Bad request',
+  })
+  public getAllVisibilityStatuses(): string[] {
+    return this.companyService.getAllVisibilityStatuses();
+  }
 
   @Post()
   @ApiOperation({
@@ -47,11 +63,14 @@ export class CompanyController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  public create(
-    @Body() createCompanyDto: CreateCompanyDto,
+  @UseInterceptors(FileInterceptor('file'))
+  public async createCompany(
     @GetUserEmail() email: string,
+    @Body('companyData', new ParseJsonPipeWithValidation(CreateCompanyDto))
+    createCompanyDto: CreateCompanyDto,
+    @UploadedFile() file?: Express.Multer.File,
   ): Promise<void> {
-    return this.companyService.createNewCompany(createCompanyDto, email);
+    return this.companyService.createNewCompany(email, createCompanyDto, file);
   }
 
   @Get()
@@ -65,6 +84,13 @@ export class CompanyController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request',
   })
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+    }),
+  )
   @UseInterceptors(ClassSerializerInterceptor)
   public async getAllCompanies(
     @Query() pageOptionsDto: PaginationOptionsDto,
@@ -90,11 +116,41 @@ export class CompanyController {
     description: 'Company not found.',
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  public findOne(
-    @Param('id') id: string,
+  public findOne(@Param('id') id: string): Promise<Company> {
+    return this.companyService.getCompanyById(id);
+  }
+
+  @Patch()
+  @ApiOperation({ summary: "Update visibility status for all user's company." })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The visibility status has been successfully updated.',
+    type: Company,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Company not found.',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Bad request.',
+  })
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+    }),
+  )
+  @UseInterceptors(ClassSerializerInterceptor)
+  public updateVisibilityStatusForAllUsersCompany(
     @GetUserEmail() email: string,
-  ): Promise<Company> {
-    return this.companyService.getCompanyById(id, email);
+    @Body() updateCompanyVisibilityDto: UpdateCompanyVisibilityDto,
+  ): Promise<ResultMessage> {
+    return this.companyService.updateVisibilityStatusForAllUsersCompany(
+      email,
+      updateCompanyVisibilityDto,
+    );
   }
 
   @Patch(':id')
@@ -122,7 +178,7 @@ export class CompanyController {
   public update(
     @Param('id') id: string,
     @GetUserEmail() email: string,
-    @Body('companyData', new ParseJsonPipe(UpdateCompanyDto))
+    @Body('companyData', new ParseJsonPipeWithValidation(UpdateCompanyDto))
     updateCompanyDto: UpdateCompanyDto,
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<Company> {
@@ -131,32 +187,6 @@ export class CompanyController {
       email,
       updateCompanyDto,
       file,
-    );
-  }
-
-  @Patch()
-  @ApiOperation({ summary: "Update visibility status for all user's company." })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'The visibility status has been successfully updated.',
-    type: Company,
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'Company not found.',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Bad request.',
-  })
-  @UseInterceptors(ClassSerializerInterceptor)
-  public updateVisibilityStatusForAllUsersCompany(
-    @GetUserEmail() email: string,
-    @Body() updateCompanyVisibilityDto: UpdateCompanyVisibilityDto,
-  ): Promise<ResultMessage> {
-    return this.companyService.updateVisibilityStatusForAllUsersCompany(
-      email,
-      updateCompanyVisibilityDto,
     );
   }
 
@@ -182,19 +212,5 @@ export class CompanyController {
     @Param('id') id: string,
   ): Promise<ResultMessage> {
     return this.companyService.removeCompanyById(email, id);
-  }
-
-  @Get('visibility-statuses')
-  @ApiOperation({ summary: 'Get all visibility statuses.' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'The list of visibility statuses.',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Bad request',
-  })
-  public getAllVisibilityStatuses(): string[] {
-    return this.companyService.getAllVisibilityStatuses();
   }
 }

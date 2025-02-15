@@ -11,13 +11,13 @@ export class Company extends BaseCustomEntity {
   companyName: string;
 
   @ApiProperty({ description: 'Company description' })
-  @Column('varchar')
+  @Column({ type: 'varchar', default: '' })
   companyDescription: string;
 
   @ApiProperty({
     description: 'Company logo url',
   })
-  @Column('varchar')
+  @Column({ type: 'varchar', default: '' })
   logoUrl: string;
 
   @Column({
@@ -29,6 +29,6 @@ export class Company extends BaseCustomEntity {
 
   @ApiProperty({ description: 'Owner', type: () => User })
   @ManyToOne(() => User, user => user.emailLogin, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userEmailLogin' })
+  @JoinColumn({ name: 'userId' })
   user: Relation<User>;
 }

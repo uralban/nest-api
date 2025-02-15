@@ -23,6 +23,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     description: 'Password of the user',
     example: 'password',
   })
+  @IsOptional()
   @Type(() => String)
   @IsNotEmpty({ message: 'Password should not be empty' })
   @IsString({ message: 'Password should be a string' })

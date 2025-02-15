@@ -18,6 +18,7 @@ import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
 import { UpdateCompanyVisibilityDto } from './dto/update-company-visibility.dto';
 import { Visibility } from '../global/enums/visibility.enum';
+import { User } from '../user/entities/user.entity';
 
 @Injectable()
 export class CompanyService {
@@ -28,6 +29,8 @@ export class CompanyService {
   constructor(
     @InjectRepository(Company)
     private companyRepository: Repository<Company>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
     private configService: ConfigService,
   ) {
     this.s3 = new S3Client({
@@ -41,17 +44,20 @@ export class CompanyService {
   }
 
   public async createNewCompany(
-    createCompanyDto: CreateCompanyDto,
     email: string,
+    createCompanyDto: CreateCompanyDto,
+    file: Express.Multer.File,
   ): Promise<void> {
     this.logger.log('Attempting to create a new company.');
-
+    const userId: string = await this.getUserId(email);
     const newCompany: Company = this.companyRepository.create({
       ...createCompanyDto,
-      user: { emailLogin: email },
+      user: { id: userId },
       logoUrl: '',
     });
-
+    if (file) {
+      newCompany.logoUrl = await this.uploadFileToS3(file);
+    }
     this.logger.log('Saving the new company to the database.');
     try {
       await this.companyRepository.save(newCompany);
@@ -59,6 +65,20 @@ export class CompanyService {
       return;
     } catch (error) {
       this.logger.error('Error while saving company', error.stack);
+    }
+  }
+
+  private async getUserId(email: string): Promise<string> {
+    const userId = await this.userRepository
+      .createQueryBuilder('user')
+      .select('user.id', 'id')
+      .where('user.emailLogin = :email', { email })
+      .getRawOne()
+      .then(result => result?.id);
+    if (!userId) {
+      throw new NotFoundException('User not found');
+    } else {
+      return userId;
     }
   }
 
@@ -85,16 +105,26 @@ export class CompanyService {
     return new PaginationDto(entities, pageMetaDto);
   }
 
-  public async getCompanyById(id: string, email: string): Promise<Company> {
-    const company: Company = await this.companyRepository.findOne({
-      where: {
-        id: id,
-        user: { emailLogin: email },
-      },
-      relations: {
-        user: true,
-      },
-    });
+  public async getCompanyById(id: string, email?: string): Promise<Company> {
+    const paramSet = email
+      ? {
+          where: {
+            id: id,
+            user: { emailLogin: email },
+          },
+          relations: {
+            user: true,
+          },
+        }
+      : {
+          where: {
+            id: id,
+          },
+          relations: {
+            user: true,
+          },
+        };
+    const company: Company = await this.companyRepository.findOne(paramSet);
     if (!company) {
       this.logger.error('Company not found.');
       throw new NotFoundException(`Company not found.`);
@@ -131,12 +161,13 @@ export class CompanyService {
     updateCompanyVisibilityDto: UpdateCompanyVisibilityDto,
   ): Promise<ResultMessage> {
     this.logger.log('Saving the updated company to the database.');
+    const userId: string = await this.getUserId(email);
     try {
       await this.companyRepository
         .createQueryBuilder()
         .update(Company)
         .set({ visibility: updateCompanyVisibilityDto.visibility })
-        .where('user.emailLogin = :email', { email })
+        .where('userId = :userId', { userId: userId })
         .execute();
       return { message: 'Update companies visibility status successfully.' };
     } catch (error) {

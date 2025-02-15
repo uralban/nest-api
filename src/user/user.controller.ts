@@ -13,6 +13,8 @@ import {
   UseInterceptors,
   UploadedFile,
   ClassSerializerInterceptor,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -24,7 +26,7 @@ import { PaginationDto } from '../global/dto/pagination.dto';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ParseJsonPipe } from '../global/pipes/parse-json.pipe';
+import { ParseJsonPipeWithValidation } from '../global/pipes/parse-json-pipe-with-validation.service';
 import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
 
 @ApiTags('User')
@@ -45,6 +47,13 @@ export class UserController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+    }),
+  )
   public async createUser(@Body() createUserDto: CreateUserDto): Promise<void> {
     return this.userService.createUser(createUserDto);
   }
@@ -61,6 +70,13 @@ export class UserController {
     description: 'Bad request',
   })
   @UseGuards(AuthGuard)
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+    }),
+  )
   @UseInterceptors(ClassSerializerInterceptor)
   public async getAllUsers(
     @Query() pageOptionsDto: PaginationOptionsDto,
@@ -131,7 +147,7 @@ export class UserController {
   @UseInterceptors(ClassSerializerInterceptor)
   public async updateUserById(
     @GetUserEmail() email: string,
-    @Body('userData', new ParseJsonPipe(UpdateUserDto))
+    @Body('userData', new ParseJsonPipeWithValidation(UpdateUserDto))
     updateUserDto: UpdateUserDto,
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<User> {

@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { GeneralResponseInterceptor } from './global/interceptors/general-response/general-response.interceptor';
 import { ErrorHandlerFilter } from './global/filters/error-handler-filter/error-handler.filter';
 import * as cookieParser from 'cookie-parser';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,6 +23,14 @@ async function bootstrap() {
   app.useGlobalFilters(new ErrorHandlerFilter());
 
   AppModule.setupSwagger(app);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+    }),
+  );
 
   app.use(cookieParser());
 

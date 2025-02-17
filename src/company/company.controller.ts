@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  HttpCode,
   HttpStatus,
   UseGuards,
   UseInterceptors,
@@ -29,6 +28,7 @@ import { ParseJsonPipeWithValidation } from '../global/pipes/parse-json-pipe-wit
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { UpdateCompanyVisibilityDto } from './dto/update-company-visibility.dto';
+import { RawBody } from '../global/decorators/raw-body.decorator';
 
 @ApiTags('Company')
 @Controller('company')
@@ -66,7 +66,7 @@ export class CompanyController {
   @UseInterceptors(FileInterceptor('file'))
   public async createCompany(
     @GetUserEmail() email: string,
-    @Body('companyData', new ParseJsonPipeWithValidation(CreateCompanyDto))
+    @RawBody('companyData', new ParseJsonPipeWithValidation(CreateCompanyDto))
     createCompanyDto: CreateCompanyDto,
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<void> {
@@ -116,8 +116,11 @@ export class CompanyController {
     description: 'Company not found.',
   })
   @UseInterceptors(ClassSerializerInterceptor)
-  public findOne(@Param('id') id: string): Promise<Company> {
-    return this.companyService.getCompanyById(id);
+  public getCompanyById(
+    @Param('id') id: string,
+    @GetUserEmail() email: string,
+  ): Promise<Company> {
+    return this.companyService.getCompanyById(id, email);
   }
 
   @Patch()
@@ -175,10 +178,10 @@ export class CompanyController {
   })
   @UseInterceptors(FileInterceptor('file'))
   @UseInterceptors(ClassSerializerInterceptor)
-  public update(
+  public updateCompanyById(
     @Param('id') id: string,
     @GetUserEmail() email: string,
-    @Body('companyData', new ParseJsonPipeWithValidation(UpdateCompanyDto))
+    @RawBody('companyData', new ParseJsonPipeWithValidation(UpdateCompanyDto))
     updateCompanyDto: UpdateCompanyDto,
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<Company> {
@@ -191,7 +194,6 @@ export class CompanyController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete the company by id.' })
   @ApiParam({
     name: 'id',
@@ -208,9 +210,9 @@ export class CompanyController {
     description: 'Company not found.',
   })
   public async removeCompanyById(
-    @GetUserEmail() email: string,
     @Param('id') id: string,
+    @GetUserEmail() email: string,
   ): Promise<ResultMessage> {
-    return this.companyService.removeCompanyById(email, id);
+    return this.companyService.removeCompanyById(id, email);
   }
 }

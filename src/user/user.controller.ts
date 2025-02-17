@@ -28,6 +28,8 @@ import { AuthGuard } from '../auth/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ParseJsonPipeWithValidation } from '../global/pipes/parse-json-pipe-with-validation.service';
 import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
+import { GetUsersByNameDto } from './dto/get-users-by-name.dto';
+import { RawBody } from '../global/decorators/raw-body.decorator';
 
 @ApiTags('User')
 @Controller('user')
@@ -84,6 +86,44 @@ export class UserController {
     return await this.userService.getAllUsers(pageOptionsDto);
   }
 
+  @Get('check-email-exist/:email')
+  @ApiOperation({ summary: 'Check free email.' })
+  @ApiParam({
+    name: 'email',
+    description: 'The email of the user to get.',
+    example: 'example@email.com',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The email status',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Bad request.',
+  })
+  public async getCheckEmailExist(
+    @Param('email') email: string,
+  ): Promise<string> {
+    return await this.userService.getCheckEmailExist(email);
+  }
+
+  @Get('get-users-by-name')
+  @ApiOperation({ summary: 'Get users by name.' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The list of users',
+    type: User,
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Bad request.',
+  })
+  public async getUsersByName(
+    @Query() getUsersByNameDto: GetUsersByNameDto,
+  ): Promise<User[]> {
+    return await this.userService.getUsersByName(getUsersByNameDto);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get the user by id.' })
   @ApiParam({
@@ -106,27 +146,6 @@ export class UserController {
     return await this.userService.getUserById(id);
   }
 
-  @Get('check-email-exist/:email')
-  @ApiOperation({ summary: 'Check free email.' })
-  @ApiParam({
-    name: 'email',
-    description: 'The email of the user to get.',
-    example: 'example@email.com',
-  })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'The email status',
-  })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: 'Bad request.',
-  })
-  public async getCheckEmailExist(
-    @Param('email') email: string,
-  ): Promise<string> {
-    return await this.userService.getCheckEmailExist(email);
-  }
-
   @Patch()
   @ApiOperation({ summary: 'Update an existing user.' })
   @ApiResponse({
@@ -147,7 +166,7 @@ export class UserController {
   @UseInterceptors(ClassSerializerInterceptor)
   public async updateUserById(
     @GetUserEmail() email: string,
-    @Body('userData', new ParseJsonPipeWithValidation(UpdateUserDto))
+    @RawBody('userData', new ParseJsonPipeWithValidation(UpdateUserDto))
     updateUserDto: UpdateUserDto,
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<User> {

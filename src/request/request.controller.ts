@@ -23,7 +23,9 @@ import { ResultMessage } from '../global/interfaces/result-message';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
 import { PaginationDto } from '../global/dto/pagination.dto';
-import { CompanyAdminOrOwnerGuard } from '../company/guards/company-admin-or-owner.guard';
+import { RoleGuard } from '../role/guards/role.guard';
+import { Roles } from '../global/decorators/roles.decorator';
+import { ExcludeRoleGuard } from '../role/guards/exclude-role.guard';
 
 @ApiTags('Company requests')
 @Controller('request')
@@ -76,10 +78,10 @@ export class RequestController {
     return this.requestService.getAllUsersRequests(pageOptionsDto, email);
   }
 
-  @Patch(':id')
+  @Patch(':requestId')
   @ApiOperation({ summary: 'Set request status to accepted.' })
   @ApiParam({
-    name: 'id',
+    name: 'requestId',
     description: 'The ID of the request.',
     example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
   })
@@ -96,17 +98,18 @@ export class RequestController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @UseGuards(CompanyAdminOrOwnerGuard)
+  @Roles('admin', 'owner')
+  @UseGuards(RoleGuard)
   public async acceptRequest(
-    @Param('id') requestId: string,
+    @Param('requestId') requestId: string,
   ): Promise<ResultMessage> {
     return this.requestService.acceptRequest(requestId);
   }
 
-  @Delete(':id')
+  @Delete(':requestId')
   @ApiOperation({ summary: 'Set request status to declined.' })
   @ApiParam({
-    name: 'id',
+    name: 'requestId',
     description: 'The ID of the request.',
     example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
   })
@@ -123,10 +126,11 @@ export class RequestController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
+  @Roles('member')
+  @UseGuards(ExcludeRoleGuard)
   public async declineRequest(
-    @Param('id') id: string,
-    @GetUserEmail() email: string,
+    @Param('requestId') requestId: string,
   ): Promise<ResultMessage> {
-    return this.requestService.declineRequest(id, email);
+    return this.requestService.declineRequest(requestId);
   }
 }

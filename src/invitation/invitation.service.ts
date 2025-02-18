@@ -15,7 +15,6 @@ import { PaginationDto } from '../global/dto/pagination.dto';
 import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
 import { InviteRequestStatus } from '../global/enums/invite-request-status.enum';
 import { MemberService } from '../members/member.service';
-import { RoleService } from '../role/role.service';
 import { Request } from '../request/entities/request.entity';
 
 @Injectable()
@@ -27,8 +26,7 @@ export class InvitationService {
     private invitationRepository: Repository<Invitation>,
     @InjectRepository(Request)
     private requestRepository: Repository<Request>,
-    private memberService: MemberService,
-    private roleService: RoleService,
+    private memberService: MemberService
   ) {}
   public async createInvite(
     createInvitationDto: CreateInvitationDto,
@@ -94,23 +92,9 @@ export class InvitationService {
     return new PaginationDto(entities, pageMetaDto);
   }
 
-  public async acceptInvite(id: string, email: string): Promise<ResultMessage> {
+  public async acceptInvite(inviteId: string): Promise<ResultMessage> {
     this.logger.log('Attempting to accept invitation.');
-    const invite: Invitation = await this.invitationRepository.findOne({
-      where: {
-        id: id,
-        invitedUser: { emailLogin: email },
-      },
-      relations: {
-        company: true,
-        invitedUser: true,
-        invitedBy: true,
-      },
-    });
-    if (!invite) {
-      this.logger.error('Invitation not found.');
-      throw new NotFoundException(`Invitation not found.`);
-    }
+    const invite: Invitation = await this.getInviteById(inviteId);
     const userIsMember: boolean = await this.memberService.checkUserMemberById(
       invite.invitedUser.id,
       invite.company.id,
@@ -144,20 +128,35 @@ export class InvitationService {
       return { message: 'Successfully accepted invitation.' };
     } catch (error) {
       this.logger.error(
-        `Failed to accept invitation with ID ${id}`,
+        `Failed to accept invitation with ID ${inviteId}`,
         error.stack,
       );
     }
   }
 
   public async declineInvitation(
-    id: string,
-    email: string,
+    inviteId: string
   ): Promise<ResultMessage> {
     this.logger.log('Attempting to decline invitation.');
+    const invite: Invitation = await this.getInviteById(inviteId);
+    invite.status = InviteRequestStatus.DECLINED;
+    this.logger.log('Saving the updated invitation to the database.');
+    try {
+      await this.invitationRepository.save(invite);
+      this.logger.log(`Successfully decline invitation.`);
+      return { message: 'Successfully decline invitation.' };
+    } catch (error) {
+      this.logger.error(
+        `Failed to decline invitation with ID ${inviteId}`,
+        error.stack,
+      );
+    }
+  }
+
+  public async getInviteById(inviteId: string): Promise<Invitation> {
     const invite: Invitation = await this.invitationRepository.findOne({
       where: {
-        id: id,
+        id: inviteId,
       },
       relations: {
         company: true,
@@ -169,26 +168,6 @@ export class InvitationService {
       this.logger.error('Invitation not found.');
       throw new NotFoundException(`Invitation not found.`);
     }
-    const userIsMember: boolean = await this.roleService.checkUserRole(
-      email,
-      invite.company.id,
-      ['member'],
-    );
-    if (userIsMember) {
-      this.logger.error('Access denied.');
-      throw new ForbiddenException('Access denied');
-    }
-    invite.status = InviteRequestStatus.DECLINED;
-    this.logger.log('Saving the updated invitation to the database.');
-    try {
-      await this.invitationRepository.save(invite);
-      this.logger.log(`Successfully decline invitation.`);
-      return { message: 'Successfully decline invitation.' };
-    } catch (error) {
-      this.logger.error(
-        `Failed to decline invitation with ID ${id}`,
-        error.stack,
-      );
-    }
+    return invite;
   }
 }

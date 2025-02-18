@@ -1,5 +1,4 @@
 import {
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -28,13 +27,9 @@ export class MemberService {
 
   public async changeRoleFromMember(
     memberId: string,
-    email: string,
     updateMemberDto: UpdateMemberRoleDto,
   ): Promise<ResultMessage> {
-    const member: Member = await this.checkOwnerAndGetMemberById(
-      memberId,
-      email,
-    );
+    const member: Member = await this.getMemberById(memberId);
     member.role = await this.roleService.getRoleById(updateMemberDto.roleId);
     this.logger.log('Saving the updated member to the database.');
     try {
@@ -46,14 +41,8 @@ export class MemberService {
     }
   }
 
-  public async removeMember(
-    memberId: string,
-    email: string,
-  ): Promise<ResultMessage> {
-    const member: Member = await this.checkOwnerAndGetMemberById(
-      memberId,
-      email,
-    );
+  public async removeMember(memberId: string): Promise<ResultMessage> {
+    const member: Member = await this.getMemberById(memberId);
     this.logger.log(`Deleting member with ID ${memberId}.`);
     try {
       await this.memberRepository.remove(member);
@@ -69,29 +58,7 @@ export class MemberService {
     }
   }
 
-  private async checkOwnerAndGetMemberById(
-    memberId: string,
-    email: string,
-  ): Promise<Member> {
-    const member: Member = await this.getMemberById(memberId);
-    this.logger.log("Check access to change member's role.");
-    const isCompanyOwner: boolean = await this.roleService.checkUserRole(
-      email,
-      member.company.id,
-      ['owner', 'admin'],
-    );
-    if (!isCompanyOwner) {
-      this.logger.error('Access denied.');
-      throw new ForbiddenException('Access denied');
-    }
-    if (member.role.roleName === 'owner') {
-      this.logger.error('Can not change owner role.');
-      throw new ForbiddenException('You can not change owner role.');
-    }
-    return member;
-  }
-
-  private async getMemberById(memberId: string): Promise<Member> {
+  public async getMemberById(memberId: string): Promise<Member> {
     const member: Member = await this.memberRepository
       .createQueryBuilder('member')
       .leftJoinAndSelect('member.company', 'company')

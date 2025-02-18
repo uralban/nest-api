@@ -13,9 +13,10 @@ import { MemberService } from './member.service';
 import { UpdateMemberRoleDto } from './dto/update-member.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
-import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
 import { ResultMessage } from '../global/interfaces/result-message';
 import { Company } from '../company/entities/company.entity';
+import { Roles } from '../global/decorators/roles.decorator';
+import { RoleGuard } from '../role/guards/role.guard';
 
 @ApiTags('Company members')
 @Controller('members')
@@ -30,10 +31,10 @@ import { Company } from '../company/entities/company.entity';
 export class MemberController {
   constructor(private readonly membersService: MemberService) {}
 
-  @Patch(':id')
+  @Patch(':memberId')
   @ApiOperation({ summary: "Update member's role." })
   @ApiParam({
-    name: 'id',
+    name: 'memberId',
     description: 'The ID of the member to update.',
     example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
   })
@@ -50,22 +51,22 @@ export class MemberController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
+  @Roles('admin', 'owner')
+  @UseGuards(RoleGuard)
   public async changeRoleFromMember(
-    @Param('id') memberId: string,
-    @GetUserEmail() email: string,
+    @Param('memberId') memberId: string,
     @Body() updateMemberRoleDto: UpdateMemberRoleDto,
   ): Promise<ResultMessage> {
     return this.membersService.changeRoleFromMember(
       memberId,
-      email,
       updateMemberRoleDto,
     );
   }
 
-  @Delete(':id')
+  @Delete(':memberId')
   @ApiOperation({ summary: 'Delete the member by id.' })
   @ApiParam({
-    name: 'id',
+    name: 'memberId',
     description: 'The ID of the member to delete.',
     example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
   })
@@ -78,10 +79,11 @@ export class MemberController {
     status: HttpStatus.NOT_FOUND,
     description: 'Member not found.',
   })
+  @Roles('admin', 'owner')
+  @UseGuards(RoleGuard)
   public async removeMember(
-    @Param('id') memberId: string,
-    @GetUserEmail() email: string,
+    @Param('memberId') memberId: string,
   ): Promise<ResultMessage> {
-    return this.membersService.removeMember(memberId, email);
+    return this.membersService.removeMember(memberId);
   }
 }

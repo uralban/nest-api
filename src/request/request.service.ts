@@ -15,7 +15,6 @@ import { PaginationDto } from '../global/dto/pagination.dto';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
 import { MemberService } from '../members/member.service';
-import { RoleService } from '../role/role.service';
 import { Invitation } from '../invitation/entities/invitation.entity';
 
 @Injectable()
@@ -28,7 +27,6 @@ export class RequestService {
     @InjectRepository(Invitation)
     private invitationRepository: Repository<Invitation>,
     private memberService: MemberService,
-    private roleService: RoleService,
   ) {}
 
   public async createRequest(
@@ -95,19 +93,7 @@ export class RequestService {
 
   public async acceptRequest(requestId: string): Promise<ResultMessage> {
     this.logger.log('Attempting to accept request.');
-    const request: Request = await this.requestRepository.findOne({
-      where: {
-        id: requestId,
-      },
-      relations: {
-        company: true,
-        requestedUser: true,
-      },
-    });
-    if (!request) {
-      this.logger.error('Request not found.');
-      throw new NotFoundException(`Request not found.`);
-    }
+    const request: Request = await this.getRequestById(requestId);
     request.status = InviteRequestStatus.ACCEPTED;
     this.logger.log('Check the same invite. ');
     const invite: Invitation = await this.invitationRepository.findOne({
@@ -139,13 +125,26 @@ export class RequestService {
     }
   }
 
-  public async declineRequest(
-    id: string,
-    email: string,
-  ): Promise<ResultMessage> {
+  public async declineRequest(requestId: string): Promise<ResultMessage> {
     this.logger.log('Attempting to decline request.');
+    const request: Request = await this.getRequestById(requestId);
+    request.status = InviteRequestStatus.DECLINED;
+    this.logger.log('Saving the updated request to the database.');
+    try {
+      await this.requestRepository.save(request);
+      this.logger.log(`Successfully decline request.`);
+      return { message: 'Successfully decline request.' };
+    } catch (error) {
+      this.logger.error(
+        `Failed to decline request with ID ${requestId}`,
+        error.stack,
+      );
+    }
+  }
+
+  public async getRequestById(requestId: string): Promise<Request> {
     const request: Request = await this.requestRepository.findOne({
-      where: { id: id },
+      where: { id: requestId },
       relations: {
         company: true,
         requestedUser: true,
@@ -155,23 +154,6 @@ export class RequestService {
       this.logger.error('Request not found.');
       throw new NotFoundException(`Request not found.`);
     }
-    const userIsMember: boolean = await this.roleService.checkUserRole(
-      email,
-      request.company.id,
-      ['member'],
-    );
-    if (userIsMember) {
-      this.logger.error('Access denied.');
-      throw new ForbiddenException('Access denied');
-    }
-    request.status = InviteRequestStatus.DECLINED;
-    this.logger.log('Saving the updated request to the database.');
-    try {
-      await this.requestRepository.save(request);
-      this.logger.log(`Successfully decline request.`);
-      return { message: 'Successfully decline request.' };
-    } catch (error) {
-      this.logger.error(`Failed to decline request with ID ${id}`, error.stack);
-    }
+    return request;
   }
 }

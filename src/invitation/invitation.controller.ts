@@ -24,7 +24,9 @@ import { Invitation } from './entities/invitation.entity';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
 import { PaginationDto } from '../global/dto/pagination.dto';
-import { CompanyAdminOrOwnerGuard } from '../company/guards/company-admin-or-owner.guard';
+import { RoleGuard } from '../role/guards/role.guard';
+import { Roles } from '../global/decorators/roles.decorator';
+import { ExcludeRoleGuard } from '../role/guards/exclude-role.guard';
 
 @ApiTags('Company invitations')
 @Controller('invitation')
@@ -40,7 +42,7 @@ export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
 
   @Post()
-  @UseGuards(CompanyAdminOrOwnerGuard)
+  @UseGuards(RoleGuard)
   @ApiOperation({
     summary: 'Create new invite.',
   })
@@ -53,6 +55,8 @@ export class InvitationController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
+  @Roles('admin', 'owner')
+  @UseGuards(RoleGuard)
   public async createInvite(
     @Body() createInvitationDto: CreateInvitationDto,
   ): Promise<ResultMessage> {
@@ -78,10 +82,10 @@ export class InvitationController {
     return this.invitationService.getAllUsersInvites(pageOptionsDto, email);
   }
 
-  @Patch(':id')
+  @Patch(':inviteId')
   @ApiOperation({ summary: 'Set invitation status to accepted.' })
   @ApiParam({
-    name: 'id',
+    name: 'inviteId',
     description: 'The ID of the invitation.',
     example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
   })
@@ -98,17 +102,18 @@ export class InvitationController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
+  @Roles('member', 'owner', 'admin')
+  @UseGuards(ExcludeRoleGuard)
   public async acceptInvite(
-    @Param('id') id: string,
-    @GetUserEmail() email: string,
+    @Param('inviteId') inviteId: string,
   ): Promise<ResultMessage> {
-    return this.invitationService.acceptInvite(id, email);
+    return this.invitationService.acceptInvite(inviteId);
   }
 
-  @Delete(':id')
+  @Delete(':inviteId')
   @ApiOperation({ summary: 'Set invitation status to declined.' })
   @ApiParam({
-    name: 'id',
+    name: 'inviteId',
     description: 'The ID of the invitation.',
     example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
   })
@@ -125,10 +130,12 @@ export class InvitationController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
+  @Roles('member')
+  @UseGuards(ExcludeRoleGuard)
   public async declineInvitation(
-    @Param('id') id: string,
+    @Param('inviteId') inviteId: string,
     @GetUserEmail() email: string,
   ): Promise<ResultMessage> {
-    return this.invitationService.declineInvitation(id, email);
+    return this.invitationService.declineInvitation(inviteId);
   }
 }

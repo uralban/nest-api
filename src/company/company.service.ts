@@ -1,9 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { ResultMessage } from '../global/interfaces/result-message';
@@ -173,16 +168,6 @@ export class CompanyService {
     updateCompanyDto: UpdateCompanyDto,
     file?: Express.Multer.File,
   ): Promise<Company> {
-    this.logger.log('Check access to update company.');
-    const isCompanyOwner: boolean = await this.roleService.checkUserRole(
-      email,
-      id,
-      ['owner'],
-    );
-    if (!isCompanyOwner) {
-      this.logger.error('Access denied.');
-      throw new ForbiddenException('Access denied');
-    }
     this.logger.log('Attempting to update company.');
     const company: Company = await this.getCompanyById(id, email);
     if (file) {
@@ -226,16 +211,6 @@ export class CompanyService {
     id: string,
     email: string,
   ): Promise<ResultMessage> {
-    this.logger.log('Check access to delete company.');
-    const isCompanyOwner: boolean = await this.roleService.checkUserRole(
-      email,
-      id,
-      ['owner'],
-    );
-    if (!isCompanyOwner) {
-      this.logger.error('Access denied.');
-      throw new ForbiddenException('Access denied');
-    }
     this.logger.log(`Deleting company with ID ${id}.`);
     const company: Company = await this.getCompanyById(id, email);
     try {

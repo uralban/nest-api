@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { CreateUserDto } from '../global/dto/user/create-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { Role } from '../role/entities/role.entity';
-import { UpdateUserDto } from '../global/dto/user/update-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { NotFoundException } from '@nestjs/common';
-import { DeleteResultMessage } from '../global/interfaces/delete-result-message';
+import { ResultMessage } from '../global/interfaces/result-message';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { Order } from '../global/enums/order.enum';
@@ -134,9 +134,9 @@ describe('UserController', () => {
   describe('deleteUser', () => {
     it('should return a success message when user is deleted', async () => {
       const userId = 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d';
-      const mockDeleteResult: DeleteResultMessage = {
+      const mockDeleteResult: ResultMessage = {
         message: `User with ID ${userId} successfully deleted.`,
-        deletedId: userId,
+        executedId: userId,
       };
       mockUserService.removeUserById.mockResolvedValue(mockDeleteResult);
 

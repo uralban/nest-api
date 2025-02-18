@@ -22,4 +22,33 @@ export class RoleService {
     this.logger.log('Roles found.');
     return roles;
   }
+
+  public async getRoleById(roleId: string): Promise<Role> {
+    const role: Role = await this.roleRepository.findOne({
+      where: { id: roleId },
+    });
+    if (!role) {
+      this.logger.error('Roles not found.');
+      throw new Error('Roles not found.');
+    }
+    this.logger.log('Roles found.');
+    return role;
+  }
+
+  public async checkUserRole(
+    email: string,
+    companyId: string,
+    roleList: string[],
+  ): Promise<boolean> {
+    this.logger.log('Check user role');
+    return this.roleRepository
+      .createQueryBuilder('role')
+      .leftJoinAndSelect('role.members', 'members')
+      .leftJoinAndSelect('members.user', 'user')
+      .leftJoinAndSelect('members.company', 'company')
+      .where('company.id = :companyId', { companyId: companyId })
+      .andWhere('user.emailLogin = :email', { email: email })
+      .andWhere('role.roleName IN (:...roles)', { roles: roleList })
+      .getExists();
+  }
 }

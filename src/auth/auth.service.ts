@@ -180,9 +180,6 @@ export class AuthService {
       where: {
         emailLogin: email,
       },
-      relations: {
-        role: true,
-      },
     });
     if (!user) {
       this.logger.warn('User not exist, adding user to the database.');
@@ -205,18 +202,10 @@ export class AuthService {
   ): Promise<User> {
     this.logger.log('Attempting to create a new user.');
     const { password, ...userData } = createUserDto;
-    const userRole: Role = await this.roleRepository.findOne({
-      where: { roleName: 'user' },
-    });
-    if (!userRole) {
-      this.logger.error('Role not found.');
-      throw new Error('Role not found.');
-    }
     this.logger.log('Role found for new user.');
     const newUser: User = this.userRepository.create({
       ...userData,
       passHash: password,
-      role: userRole,
     });
     this.logger.log('Saving the new user to the database.');
     try {

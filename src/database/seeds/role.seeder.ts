@@ -19,7 +19,13 @@ export default class RoleSeeder implements Seeder {
       },
       {
         id: (await (await factoryManager.get(Role)).make()).id,
-        roleName: 'user',
+        roleName: 'owner',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: (await (await factoryManager.get(Role)).make()).id,
+        roleName: 'member',
         createdAt: new Date(),
         updatedAt: new Date(),
       },

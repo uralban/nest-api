@@ -1,6 +1,5 @@
 import { Seeder, SeederFactoryManager } from 'typeorm-extension';
 import { DataSource, Repository } from 'typeorm';
-import { Role } from '../../role/entities/role.entity';
 import { User } from '../../user/entities/user.entity';
 
 export default class UserSeeder implements Seeder {
@@ -10,16 +9,7 @@ export default class UserSeeder implements Seeder {
     dataSource: DataSource,
     factoryManager: SeederFactoryManager,
   ): Promise<void> {
-    const roleRepository: Repository<Role> = dataSource.getRepository(Role);
     const userRepository: Repository<User> = dataSource.getRepository(User);
-
-    const adminRole: Role = await roleRepository.findOneBy({
-      roleName: 'admin',
-    });
-
-    const userRole: Role = await roleRepository.findOneBy({
-      roleName: 'user',
-    });
 
     const users: User[] = [
       {
@@ -31,7 +21,6 @@ export default class UserSeeder implements Seeder {
         avatarUrl: '',
         createdAt: (await (await factoryManager.get(User)).make()).createdAt,
         updatedAt: new Date(),
-        role: adminRole,
       },
       {
         id: (await (await factoryManager.get(User)).make()).id,
@@ -42,7 +31,6 @@ export default class UserSeeder implements Seeder {
         avatarUrl: '',
         createdAt: (await (await factoryManager.get(User)).make()).createdAt,
         updatedAt: new Date(),
-        role: userRole,
       },
       {
         id: (await (await factoryManager.get(User)).make()).id,
@@ -53,7 +41,6 @@ export default class UserSeeder implements Seeder {
         avatarUrl: '',
         createdAt: (await (await factoryManager.get(User)).make()).createdAt,
         updatedAt: new Date(),
-        role: userRole,
       },
     ];
     await userRepository.save(users);

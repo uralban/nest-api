@@ -2,11 +2,11 @@ import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request, Response } from 'express';
-import { CustomTokenPayload } from '../global/interfaces/custom-token-payload';
-import { AuthService } from './auth.service';
-import { User } from '../user/entities/user.entity';
-import { UserService } from '../user/user.service';
-import { LocalJwtService } from './local-jwt.service';
+import { CustomTokenPayload } from '../../global/interfaces/custom-token-payload';
+import { AuthService } from '../auth.service';
+import { User } from '../../user/entities/user.entity';
+import { UserService } from '../../user/user.service';
+import { LocalJwtService } from '../local-jwt.service';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy, 'local') {

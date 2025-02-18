@@ -1,17 +1,18 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { CompanyService } from './company.service';
-import { CompanyController } from './company.controller';
+import { InvitationService } from './invitation.service';
+import { InvitationController } from './invitation.controller';
 import { RoleModule } from '../role/role.module';
 import { MemberModule } from '../members/member.module';
 import { RequestModule } from '../request/request.module';
 
 @Module({
-  controllers: [CompanyController],
-  providers: [CompanyService],
+  controllers: [InvitationController],
+  providers: [InvitationService],
   imports: [
+    forwardRef(() => MemberModule),
     forwardRef(() => RequestModule),
-    MemberModule,
     RoleModule
   ],
+  exports: [InvitationService]
 })
-export class CompanyModule {}
+export class InvitationModule {}

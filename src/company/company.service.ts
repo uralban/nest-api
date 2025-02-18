@@ -19,6 +19,9 @@ import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
 import { UpdateCompanyVisibilityDto } from './dto/update-company-visibility.dto';
 import { Visibility } from '../global/enums/visibility.enum';
 import { User } from '../user/entities/user.entity';
+import { RoleService } from '../role/role.service';
+import { MemberService } from '../members/member.service';
+import { InviteRequestStatus } from '../global/enums/invite-request-status.enum';
 
 @Injectable()
 export class CompanyService {
@@ -32,6 +35,8 @@ export class CompanyService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private configService: ConfigService,
+    private roleService: RoleService,
+    private memberService: MemberService,
   ) {
     this.s3 = new S3Client({
       region: this.configService.get('AWS_REGION'),
@@ -52,7 +57,7 @@ export class CompanyService {
     const userId: string = await this.getUserId(email);
     const newCompany: Company = this.companyRepository.create({
       ...createCompanyDto,
-      user: { id: userId },
+      owner: { id: userId },
       logoUrl: '',
     });
     if (file) {
@@ -60,7 +65,9 @@ export class CompanyService {
     }
     this.logger.log('Saving the new company to the database.');
     try {
-      await this.companyRepository.save(newCompany);
+      const resultCompany: Company =
+        await this.companyRepository.save(newCompany);
+      await this.memberService.createMember(resultCompany.id, userId, 'owner');
       this.logger.log('Successfully created new company.');
       return;
     } catch (error) {
@@ -89,8 +96,11 @@ export class CompanyService {
     const queryBuilder: SelectQueryBuilder<Company> =
       this.companyRepository.createQueryBuilder('company');
     queryBuilder
-      .leftJoinAndSelect('company.user', 'user')
-      .where('user.emailLogin = :email', { email: email })
+      .leftJoinAndSelect('company.owner', 'owner')
+      .leftJoinAndSelect('company.members', 'members')
+      .leftJoinAndSelect('members.user', 'user')
+      .where('owner.emailLogin = :email', { email: email })
+      .orWhere('user.emailLogin = :email', { email: email })
       .orWhere('visibility = :visible', { visible: Visibility.VISIBLE })
       .orderBy('company.createdAt', pageOptionsDto.order)
       .skip(pageOptionsDto.skip)
@@ -105,26 +115,45 @@ export class CompanyService {
     return new PaginationDto(entities, pageMetaDto);
   }
 
-  public async getCompanyById(id: string, email?: string): Promise<Company> {
-    const paramSet = email
-      ? {
-          where: {
-            id: id,
-            user: { emailLogin: email },
-          },
-          relations: {
-            user: true,
-          },
-        }
-      : {
-          where: {
-            id: id,
-          },
-          relations: {
-            user: true,
-          },
-        };
-    const company: Company = await this.companyRepository.findOne(paramSet);
+  public async getCompanyById(id: string, email: string): Promise<Company> {
+    const isCompanyOwnerOrAdmin: boolean = await this.roleService.checkUserRole(
+      email,
+      id,
+      ['admin', 'owner'],
+    );
+    const queryBuilder: SelectQueryBuilder<Company> =
+      this.companyRepository.createQueryBuilder('company');
+    if (isCompanyOwnerOrAdmin) {
+      queryBuilder
+        .leftJoinAndSelect('company.owner', 'owner')
+        .leftJoinAndSelect('company.members', 'members')
+        .leftJoinAndSelect('members.user', 'user')
+        .leftJoinAndSelect('members.role', 'role')
+        .leftJoinAndSelect(
+          'company.requests',
+          'requests',
+          'requests.status = :requestStatus',
+        )
+        .leftJoinAndSelect('requests.requestedUser', 'requestedUser')
+        .leftJoinAndSelect(
+          'company.invitations',
+          'invitations',
+          'invitations.status = :invitationStatus',
+        )
+        .leftJoinAndSelect('invitations.invitedUser', 'invitedUser')
+        .where('company.id = :companyId', { companyId: id })
+        .setParameter('requestStatus', InviteRequestStatus.PENDING)
+        .setParameter('invitationStatus', InviteRequestStatus.PENDING);
+    } else {
+      queryBuilder
+        .leftJoinAndSelect('company.owner', 'owner')
+        .leftJoinAndSelect('company.members', 'members')
+        .leftJoinAndSelect('members.user', 'user')
+        .leftJoinAndSelect('members.role', 'role')
+        .where('company.id = :companyId', { companyId: id });
+    }
+    const { entities } = await queryBuilder.getRawAndEntities();
+    const company: Company = entities[0];
     if (!company) {
       this.logger.error('Company not found.');
       throw new NotFoundException(`Company not found.`);
@@ -167,7 +196,7 @@ export class CompanyService {
         .createQueryBuilder()
         .update(Company)
         .set({ visibility: updateCompanyVisibilityDto.visibility })
-        .where('userId = :userId', { userId: userId })
+        .where('ownerId = :userId', { userId: userId })
         .execute();
       return { message: 'Update companies visibility status successfully.' };
     } catch (error) {
@@ -179,8 +208,8 @@ export class CompanyService {
   }
 
   public async removeCompanyById(
-    email: string,
     id: string,
+    email: string,
   ): Promise<ResultMessage> {
     this.logger.log(`Deleting company with ID ${id}.`);
     const company: Company = await this.getCompanyById(id, email);

@@ -29,6 +29,8 @@ import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { UpdateCompanyVisibilityDto } from './dto/update-company-visibility.dto';
 import { RawBody } from '../global/decorators/raw-body.decorator';
+import { Roles } from '../global/decorators/roles.decorator';
+import { RoleGuard } from '../role/guards/role.guard';
 
 @ApiTags('Company')
 @Controller('company')
@@ -99,10 +101,10 @@ export class CompanyController {
     return await this.companyService.getAllCompanies(pageOptionsDto, email);
   }
 
-  @Get(':id')
+  @Get(':companyId')
   @ApiOperation({ summary: 'Get company by id.' })
   @ApiParam({
-    name: 'id',
+    name: 'companyId',
     description: 'The ID of the company to get.',
     example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
   })
@@ -117,10 +119,10 @@ export class CompanyController {
   })
   @UseInterceptors(ClassSerializerInterceptor)
   public getCompanyById(
-    @Param('id') id: string,
+    @Param('companyId') companyId: string,
     @GetUserEmail() email: string,
   ): Promise<Company> {
-    return this.companyService.getCompanyById(id, email);
+    return this.companyService.getCompanyById(companyId, email);
   }
 
   @Patch()
@@ -156,10 +158,10 @@ export class CompanyController {
     );
   }
 
-  @Patch(':id')
+  @Patch(':companyId')
   @ApiOperation({ summary: 'Update an existing company.' })
   @ApiParam({
-    name: 'id',
+    name: 'companyId',
     description: 'The ID of the company to update.',
     example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
   })
@@ -176,27 +178,29 @@ export class CompanyController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
+  @Roles('owner')
+  @UseGuards(RoleGuard)
   @UseInterceptors(FileInterceptor('file'))
   @UseInterceptors(ClassSerializerInterceptor)
   public updateCompanyById(
-    @Param('id') id: string,
+    @Param('companyId') companyId: string,
     @GetUserEmail() email: string,
     @RawBody('companyData', new ParseJsonPipeWithValidation(UpdateCompanyDto))
     updateCompanyDto: UpdateCompanyDto,
     @UploadedFile() file?: Express.Multer.File,
   ): Promise<Company> {
     return this.companyService.updateCompanyById(
-      id,
+      companyId,
       email,
       updateCompanyDto,
       file,
     );
   }
 
-  @Delete(':id')
+  @Delete(':companyId')
   @ApiOperation({ summary: 'Delete the company by id.' })
   @ApiParam({
-    name: 'id',
+    name: 'companyId',
     description: 'The ID of the company to delete.',
     example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
   })
@@ -209,10 +213,12 @@ export class CompanyController {
     status: HttpStatus.NOT_FOUND,
     description: 'Company not found.',
   })
+  @Roles('owner')
+  @UseGuards(RoleGuard)
   public async removeCompanyById(
-    @Param('id') id: string,
+    @Param('companyId') companyId: string,
     @GetUserEmail() email: string,
   ): Promise<ResultMessage> {
-    return this.companyService.removeCompanyById(id, email);
+    return this.companyService.removeCompanyById(companyId, email);
   }
 }

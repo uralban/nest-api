@@ -7,7 +7,6 @@ import { AppService } from '../app.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ResultMessage } from '../global/interfaces/result-message';
 import * as bcrypt from 'bcrypt';
-import { Role } from '../role/entities/role.entity';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
@@ -18,6 +17,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
+import { GetUsersByNameDto } from './dto/get-users-by-name.dto';
 
 @Injectable()
 export class UserService {
@@ -29,8 +29,6 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    @InjectRepository(Role)
-    private roleRepository: Repository<Role>,
     private configService: ConfigService,
   ) {
     this.s3 = new S3Client({
@@ -46,7 +44,7 @@ export class UserService {
   public async createUser(createUserDto: CreateUserDto): Promise<void> {
     this.logger.log('Attempting to create a new user.');
 
-    const { password, roleId, ...userData } = createUserDto;
+    const { password, ...userData } = createUserDto;
 
     const hashedPassword: string = await bcrypt.hash(
       password,
@@ -54,19 +52,9 @@ export class UserService {
     );
     this.logger.log('Password hashed successfully for new user.');
 
-    const userRole: Role = await this.roleRepository.findOne({
-      where: { id: roleId },
-    });
-    if (!userRole) {
-      this.logger.error('Role not found.');
-      throw new Error('Role not found.');
-    }
-    this.logger.log('Role found for new user.');
-
     const newUser: User = this.userRepository.create({
       ...userData,
       passHash: hashedPassword,
-      role: userRole,
       avatarUrl: '',
     });
 
@@ -86,7 +74,6 @@ export class UserService {
     const queryBuilder: SelectQueryBuilder<User> =
       this.userRepository.createQueryBuilder('user');
     queryBuilder
-      .leftJoinAndSelect('user.role', 'role')
       .orderBy('user.createdAt', pageOptionsDto.order)
       .skip(pageOptionsDto.skip)
       .take(+pageOptionsDto.take);
@@ -106,9 +93,6 @@ export class UserService {
       where: {
         id: id,
       },
-      relations: {
-        role: true,
-      },
     });
     if (!user) {
       this.logger.error('User not found.');
@@ -122,9 +106,6 @@ export class UserService {
     const user: User = await this.userRepository.findOne({
       where: {
         emailLogin: email,
-      },
-      relations: {
-        role: true,
       },
     });
     if (!user) {
@@ -142,6 +123,25 @@ export class UserService {
       },
     });
     return user ? 'emailExist' : 'emailNotExist';
+  }
+
+  public async getUsersByName(
+    getUsersByNameDto: GetUsersByNameDto,
+  ): Promise<User[]> {
+    return await this.userRepository
+      .createQueryBuilder('user')
+      .select(['user.id', 'user.firstName', 'user.lastName', 'user.emailLogin'])
+      .where('LOWER(user.firstName) LIKE LOWER(:name)', {
+        name: `%${getUsersByNameDto.name}%`,
+      })
+      .orWhere('LOWER(user.lastName) LIKE LOWER(:name)', {
+        name: `%${getUsersByNameDto.name}%`,
+      })
+      .orWhere('LOWER(user.emailLogin) LIKE LOWER(:name)', {
+        name: `%${getUsersByNameDto.name}%`,
+      })
+      .limit(20)
+      .getMany();
   }
 
   public async uploadFileToS3(file: Express.Multer.File): Promise<string> {

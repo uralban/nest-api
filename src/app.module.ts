@@ -16,6 +16,12 @@ import { RedisModule } from './redis/redis.module';
 import { UserService } from './user/user.service';
 import { CompanyModule } from './company/company.module';
 import { Company } from './company/entities/company.entity';
+import { InvitationModule } from './invitation/invitation.module';
+import { RequestModule } from './request/request.module';
+import { Request } from './request/entities/request.entity';
+import { MemberModule } from './members/member.module';
+import { Member } from './members/entities/member.entity';
+import { Invitation } from './invitation/entities/invitation.entity';
 
 @Global()
 @Module({
@@ -24,12 +30,23 @@ import { Company } from './company/entities/company.entity';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
-    TypeOrmModule.forFeature([Auth, User, Role, Company]),
+    TypeOrmModule.forFeature([
+      Auth,
+      User,
+      Role,
+      Company,
+      Request,
+      Invitation,
+      Member,
+    ]),
     UserModule,
     RoleModule,
     AuthModule,
     RedisModule,
     CompanyModule,
+    InvitationModule,
+    RequestModule,
+    MemberModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthService, UserService],

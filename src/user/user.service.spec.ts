@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserService } from './user.service';
 import { User } from './entities/user.entity';
 import { Role } from '../role/entities/role.entity';
-import { CreateUserDto } from '../global/dto/user/create-user.dto';
-import { UpdateUserDto } from '../global/dto/user/update-user.dto';
-import { DeleteResultMessage } from '../global/interfaces/delete-result-message';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { ResultMessage } from '../global/interfaces/result-message';
 import { NotFoundException } from '@nestjs/common';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
@@ -106,12 +106,12 @@ describe('UserService', () => {
   describe('removeUserById', () => {
     it('should remove user by ID', async () => {
       const mockUuid: string = 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d';
-      const result: DeleteResultMessage = {
+      const result: ResultMessage = {
         message: `User with ID ${mockUuid} successfully deleted.`,
-        deletedId: mockUuid,
+        executedId: mockUuid,
       };
       mockUserService.removeUserById.mockResolvedValue(result);
-      expect(await userService.removeUserById(mockUuid)).toEqual(result);
+      expect(await userService.removeUser(mockUuid)).toEqual(result);
       expect(mockUserService.removeUserById).toHaveBeenCalledWith(mockUuid);
     });
   });

@@ -14,6 +14,8 @@ import { User } from './user/entities/user.entity';
 import { Role } from './role/entities/role.entity';
 import { RedisModule } from './redis/redis.module';
 import { UserService } from './user/user.service';
+import { CompanyModule } from './company/company.module';
+import { Company } from './company/entities/company.entity';
 
 @Global()
 @Module({
@@ -22,11 +24,12 @@ import { UserService } from './user/user.service';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
-    TypeOrmModule.forFeature([Auth, User, Role]),
+    TypeOrmModule.forFeature([Auth, User, Role, Company]),
     UserModule,
     RoleModule,
     AuthModule,
     RedisModule,
+    CompanyModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthService, UserService],

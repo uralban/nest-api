@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Response } from 'express';
-import { LoginDto } from '../global/dto/login.dto';
+import { LoginDto } from './dto/login.dto';
 import { TokenSet } from '../global/interfaces/token-set';
 import { AuthGuard } from './auth.guard';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';

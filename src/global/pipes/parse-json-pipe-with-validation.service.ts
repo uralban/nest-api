@@ -3,7 +3,7 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
 @Injectable()
-export class ParseJsonPipe<T extends object>
+export class ParseJsonPipeWithValidation<T extends object>
   implements PipeTransform<string, Promise<T>>
 {
   constructor(private readonly dto: new () => T) {}

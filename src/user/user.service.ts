@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CreateUserDto } from '../global/dto/user/create-user.dto';
-import { UpdateUserDto } from '../global/dto/user/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { User } from './entities/user.entity';
 import { AppService } from '../app.service';
@@ -40,7 +40,6 @@ export class UserService {
         secretAccessKey: this.configService.get('AWS_SECRET_ACCESS_KEY'),
       },
     });
-
     this.bucketName = this.configService.get('AWS_S3_BUCKET');
   }
 

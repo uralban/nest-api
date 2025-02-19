@@ -8,8 +8,6 @@ import {
   Delete,
   UseGuards,
   HttpStatus,
-  UsePipes,
-  ValidationPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
   Query,
@@ -26,17 +24,11 @@ import { PaginationDto } from '../global/dto/pagination.dto';
 import { RoleGuard } from '../role/guards/role.guard';
 import { Roles } from '../global/decorators/roles.decorator';
 import { ExcludeRoleGuard } from '../role/guards/exclude-role.guard';
+import { RoleEnum } from '../global/enums/role.enum';
 
 @ApiTags('Company requests')
 @Controller('request')
 @UseGuards(AuthGuard)
-@UsePipes(
-  new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: false,
-    transform: true,
-  }),
-)
 export class RequestController {
   constructor(private readonly requestService: RequestService) {}
 
@@ -98,7 +90,7 @@ export class RequestController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @Roles('admin', 'owner')
+  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
   @UseGuards(RoleGuard)
   public async acceptRequest(
     @Param('requestId') requestId: string,
@@ -126,7 +118,7 @@ export class RequestController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @Roles('member')
+  @Roles(RoleEnum.MEMBER)
   @UseGuards(ExcludeRoleGuard)
   public async declineRequest(
     @Param('requestId') requestId: string,

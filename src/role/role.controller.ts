@@ -12,9 +12,7 @@ import { Role } from './entities/role.entity';
 @ApiTags('Role')
 @Controller('role')
 export class RoleController {
-  constructor(
-    private readonly roleService: RoleService
-  ) {}
+  constructor(private readonly roleService: RoleService) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all roles.' })

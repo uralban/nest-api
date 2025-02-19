@@ -22,6 +22,7 @@ import { User } from '../user/entities/user.entity';
 import { RoleService } from '../role/role.service';
 import { MemberService } from '../members/member.service';
 import { InviteRequestStatus } from '../global/enums/invite-request-status.enum';
+import { RoleEnum } from '../global/enums/role.enum';
 
 @Injectable()
 export class CompanyService {
@@ -67,7 +68,11 @@ export class CompanyService {
     try {
       const resultCompany: Company =
         await this.companyRepository.save(newCompany);
-      await this.memberService.createMember(resultCompany.id, userId, 'owner');
+      await this.memberService.createMember(
+        resultCompany.id,
+        userId,
+        RoleEnum.OWNER,
+      );
       this.logger.log('Successfully created new company.');
       return;
     } catch (error) {
@@ -119,7 +124,7 @@ export class CompanyService {
     const isCompanyOwnerOrAdmin: boolean = await this.roleService.checkUserRole(
       email,
       id,
-      ['admin', 'owner'],
+      [RoleEnum.ADMIN, RoleEnum.OWNER],
     );
     const queryBuilder: SelectQueryBuilder<Company> =
       this.companyRepository.createQueryBuilder('company');

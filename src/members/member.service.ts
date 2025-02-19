@@ -12,6 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ResultMessage } from '../global/interfaces/result-message';
 import { RoleService } from '../role/role.service';
+import { RoleEnum } from '../global/enums/role.enum';
 
 @Injectable()
 export class MemberService {
@@ -99,7 +100,7 @@ export class MemberService {
   private async getMemberRole(role?: string): Promise<Role> {
     const memberRole: Role = await this.roleRepository.findOne({
       where: {
-        roleName: role ? role : 'member',
+        roleName: role ? role : RoleEnum.MEMBER,
       },
     });
     if (!memberRole) {

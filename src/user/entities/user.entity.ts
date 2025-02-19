@@ -4,6 +4,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { Company } from '../../company/entities/company.entity';
 import { Member } from '../../members/entities/member.entity';
+import { Invitation } from '../../invitation/entities/invitation.entity';
+import { QuizAttempt } from '../../quiz-attempt/entities/quiz-attempt.entity';
 
 @Entity()
 export class User extends BaseCustomEntity {
@@ -33,9 +35,18 @@ export class User extends BaseCustomEntity {
   @Exclude()
   passHash: string;
 
+  @ApiProperty({ description: 'Memberships list', type: () => Member })
   @OneToMany(() => Member, member => member.user)
   companyMemberships?: Member[];
 
+  @ApiProperty({
+    description: 'Companies list, which user is owner',
+    type: () => Invitation,
+  })
   @OneToMany(() => Company, company => company.owner)
   ownedCompanies?: Company[];
+
+  @ApiProperty({ description: 'Quiz attempts list', type: () => Invitation })
+  @OneToMany(() => QuizAttempt, attempt => attempt.user)
+  attempts?: QuizAttempt[];
 }

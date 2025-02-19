@@ -12,8 +12,6 @@ import {
   ClassSerializerInterceptor,
   UploadedFile,
   Query,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { CompanyService } from './company.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -31,6 +29,7 @@ import { UpdateCompanyVisibilityDto } from './dto/update-company-visibility.dto'
 import { RawBody } from '../global/decorators/raw-body.decorator';
 import { Roles } from '../global/decorators/roles.decorator';
 import { RoleGuard } from '../role/guards/role.guard';
+import { RoleEnum } from '../global/enums/role.enum';
 
 @ApiTags('Company')
 @Controller('company')
@@ -86,13 +85,6 @@ export class CompanyController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request',
   })
-  @UsePipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: false,
-      transform: true,
-    }),
-  )
   @UseInterceptors(ClassSerializerInterceptor)
   public async getAllCompanies(
     @Query() pageOptionsDto: PaginationOptionsDto,
@@ -140,13 +132,6 @@ export class CompanyController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @UsePipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: false,
-      transform: true,
-    }),
-  )
   @UseInterceptors(ClassSerializerInterceptor)
   public updateVisibilityStatusForAllUsersCompany(
     @GetUserEmail() email: string,
@@ -178,7 +163,7 @@ export class CompanyController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @Roles('owner')
+  @Roles(RoleEnum.OWNER)
   @UseGuards(RoleGuard)
   @UseInterceptors(FileInterceptor('file'))
   @UseInterceptors(ClassSerializerInterceptor)
@@ -213,7 +198,7 @@ export class CompanyController {
     status: HttpStatus.NOT_FOUND,
     description: 'Company not found.',
   })
-  @Roles('owner')
+  @Roles(RoleEnum.OWNER)
   @UseGuards(RoleGuard)
   public async removeCompanyById(
     @Param('companyId') companyId: string,

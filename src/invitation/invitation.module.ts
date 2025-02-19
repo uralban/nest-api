@@ -4,6 +4,7 @@ import { InvitationController } from './invitation.controller';
 import { RoleModule } from '../role/role.module';
 import { MemberModule } from '../members/member.module';
 import { RequestModule } from '../request/request.module';
+import { QuizModule } from '../quiz/quiz.module';
 
 @Module({
   controllers: [InvitationController],
@@ -11,8 +12,9 @@ import { RequestModule } from '../request/request.module';
   imports: [
     forwardRef(() => MemberModule),
     forwardRef(() => RequestModule),
-    RoleModule
+    forwardRef(() => QuizModule),
+    RoleModule,
   ],
-  exports: [InvitationService]
+  exports: [InvitationService],
 })
 export class InvitationModule {}

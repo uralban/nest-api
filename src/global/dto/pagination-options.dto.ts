@@ -1,13 +1,15 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Order } from '../enums/order.enum';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class PaginationOptionsDto {
   @ApiPropertyOptional({ enum: Order, default: Order.ASC })
   @IsOptional()
   @Type(() => String)
-  @IsString({ message: 'Order should be a string' })
+  @IsEnum(Order, {
+    message: 'Order should be either "ASC" or "DESC"',
+  })
   readonly order?: Order = Order.ASC;
 
   @ApiPropertyOptional({ minimum: 1, default: 1 })

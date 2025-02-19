@@ -13,8 +13,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { QuizService } from './quiz.service';
-import { CreateQuizDto } from './dto/create-quiz.dto';
-import { UpdateQuizDto } from './dto/update-quiz.dto';
+import { QuizDto } from './dto/quiz.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
 import { RoleGuard } from '../role/guards/role.guard';
@@ -31,7 +30,7 @@ import { PaginationDto } from '../global/dto/pagination.dto';
 export class QuizController {
   constructor(private readonly quizService: QuizService) {}
 
-  @Post()
+  @Post(':companyId')
   @ApiOperation({
     summary: 'Create a new quiz.',
   })
@@ -46,9 +45,10 @@ export class QuizController {
   @Roles(RoleEnum.OWNER, RoleEnum.ADMIN)
   @UseGuards(RoleGuard)
   public async createNewQuiz(
-    @Body() createQuizDto: CreateQuizDto,
+    @Body() createQuizDto: QuizDto,
+    @Param('companyId') companyId: string,
   ): Promise<ResultMessage> {
-    return this.quizService.createNewQuiz(createQuizDto);
+    return this.quizService.createNewQuiz(createQuizDto, companyId);
   }
 
   @Get('company/:companyId')
@@ -120,7 +120,7 @@ export class QuizController {
   @UseGuards(RoleGuard)
   public async updateQuizById(
     @Param('quizId') quizId: string,
-    @Body() updateQuizDto: UpdateQuizDto,
+    @Body() updateQuizDto: QuizDto,
   ): Promise<ResultMessage> {
     return this.quizService.updateQuizById(quizId, updateQuizDto);
   }

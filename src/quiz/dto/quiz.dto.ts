@@ -5,29 +5,22 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateQuestionDto } from './create-question.dto';
 
-export class CreateQuizDto {
-  @ApiProperty({
-    description: 'Company id',
-    example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
-  })
-  @Type(() => String)
-  @IsNotEmpty({ message: 'Company id should not be empty' })
-  @IsString({ message: 'Company id should be a string' })
-  companyId: string;
-
+export class QuizDto {
   @ApiProperty({
     description: 'Title of the quiz',
     example: 'JavaScript Basics',
   })
   @Type(() => String)
-  @IsNotEmpty()
-  @IsString()
+  @IsNotEmpty({ message: 'Title should not be empty' })
+  @IsString({ message: 'Title should be a string' })
+  @MaxLength(200, { message: 'Max title length is 200' })
   title: string;
 
   @ApiPropertyOptional({
@@ -37,13 +30,13 @@ export class CreateQuizDto {
   })
   @Type(() => String)
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'Description should be a string' })
   description?: string;
 
   @ApiProperty({ description: 'Quiz completion frequency in days', example: 7 })
   @Type(() => Number)
-  @IsNotEmpty()
-  @IsInt()
+  @IsNotEmpty({ message: 'Frequency should not be empty' })
+  @IsInt({ message: 'Frequency should be a number' })
   @Min(1)
   frequencyInDays: number;
 

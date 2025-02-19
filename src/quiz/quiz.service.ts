@@ -1,6 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { CreateQuizDto } from './dto/create-quiz.dto';
-import { UpdateQuizDto } from './dto/update-quiz.dto';
+import { QuizDto } from './dto/quiz.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Quiz } from './entities/quiz.entity';
 import { Repository, SelectQueryBuilder } from 'typeorm';
@@ -26,14 +25,15 @@ export class QuizService {
   ) {}
 
   public async createNewQuiz(
-    createQuizDto: CreateQuizDto,
+    createQuizDto: QuizDto,
+    companyId: string,
   ): Promise<ResultMessage> {
     this.logger.log('Attempting to create a new quiz.');
     const newQuiz: Quiz = this.quizRepository.create({
       title: createQuizDto.title,
       description: createQuizDto.description,
       frequencyInDays: createQuizDto.frequencyInDays,
-      company: { id: createQuizDto.companyId },
+      company: { id: companyId },
     });
     this.logger.log('Saving the new quiz to the database.');
     try {
@@ -100,7 +100,7 @@ export class QuizService {
 
   public async updateQuizById(
     quizId: string,
-    updateQuizDto: UpdateQuizDto,
+    updateQuizDto: QuizDto,
   ): Promise<ResultMessage> {
     this.logger.log('Attempting to update quiz.');
     const quiz: Quiz = await this.getQuizById(quizId);

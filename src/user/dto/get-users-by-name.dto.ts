@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsString, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GetUsersByNameDto {
@@ -9,5 +9,6 @@ export class GetUsersByNameDto {
   })
   @Type(() => String)
   @IsString({ message: 'Name should be a string' })
+  @MaxLength(200, { message: 'Max name length is 200' })
   readonly name?: string;
 }

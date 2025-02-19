@@ -4,6 +4,7 @@ import {
   ArrayMinSize,
   IsNotEmpty,
   IsString,
+  MaxLength,
   Validate,
   ValidateNested,
 } from 'class-validator';
@@ -16,8 +17,9 @@ export class CreateQuestionDto {
     example: 'What is this?',
   })
   @Type(() => String)
-  @IsNotEmpty()
-  @IsString()
+  @IsNotEmpty({ message: 'Content should not be empty' })
+  @IsString({ message: 'Content should be a string' })
+  @MaxLength(200, { message: 'Max content length is 200' })
   content: string;
 
   @ApiProperty({

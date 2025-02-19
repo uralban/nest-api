@@ -34,7 +34,7 @@ export class RoleGuard implements CanActivate {
     let companyId = request.body.companyId || request.params.companyId;
     const requestId = request.params.requestId;
     const memberId = request.params.memberId;
-    const quizId = request.params.quizId;
+    const quizId = request.params.quizId || request.body.quizId;
 
     if (requestId && !companyId) {
       const request: Request =

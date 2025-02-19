@@ -92,8 +92,8 @@ export class QuizService {
       },
     });
     if (!quiz) {
-      this.logger.error('Request not found.');
-      throw new NotFoundException(`Request not found.`);
+      this.logger.error('Quiz not found.');
+      throw new NotFoundException(`Quiz not found.`);
     }
     return quiz;
   }

@@ -13,6 +13,10 @@ import { UserService } from '../user/user.service';
 import { QuizService } from '../quiz/quiz.service';
 import { ResultMessage } from '../global/interfaces/result-message';
 import { AnswersScoreData } from '../global/interfaces/answers-score-data.interface';
+import { Answer } from '../quiz/entities/answer.entity';
+import { createObjectCsvStringifier } from 'csv-writer';
+import { StoredAttempt } from '../global/interfaces/stored-attempt.interface';
+import { ExportType } from '../global/enums/export-type.enum';
 
 @Injectable()
 export class QuizAttemptService {
@@ -96,9 +100,9 @@ export class QuizAttemptService {
     }
     this.logger.log('Create attempt data to cache saving.');
     const attemptId: string = newQuizAttempt.id;
-    const attemptData = {
-      user: { id: user.id, name: user.emailLogin },
-      company: { id: quiz.company.id, name: quiz.company.companyName },
+    const attemptData: StoredAttempt = {
+      user: { id: user.id, email: user.emailLogin },
+      company: { id: quiz.company.id, companyName: quiz.company.companyName },
       quiz: { id: quiz.id, title: quiz.title },
       questionsAndAnswers: questionsAndAnswerData,
     };
@@ -167,5 +171,130 @@ export class QuizAttemptService {
     return (
       totalAnswersScoreData.answersScore / totalAnswersScoreData.questionCount
     ).toString();
+  }
+
+  public async exportQuizAttemptsByCompany(
+    companyId: string,
+    exportType: ExportType,
+  ): Promise<string> {
+    const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
+    const filteredAttempts: StoredAttempt[] = attempts.filter(
+      attempt => attempt.company.id === companyId,
+    );
+    switch (exportType) {
+      case ExportType.JSON: {
+        return JSON.stringify(filteredAttempts, null, 2);
+      }
+      case ExportType.CSV: {
+        return this.generateCSVFromAttempts(filteredAttempts);
+      }
+    }
+  }
+
+  public async exportQuizAttemptsByCompanyUser(
+    companyId: string,
+    userId: string,
+    exportType: ExportType,
+  ): Promise<string> {
+    const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
+    const filteredAttempts: StoredAttempt[] = attempts.filter(
+      attempt => attempt.company.id === companyId && attempt.user.id === userId,
+    );
+    switch (exportType) {
+      case ExportType.JSON: {
+        return JSON.stringify(filteredAttempts, null, 2);
+      }
+      case ExportType.CSV: {
+        return this.generateCSVFromAttempts(filteredAttempts);
+      }
+    }
+  }
+
+  public async exportQuizAttemptsByUser(
+    email: string,
+    exportType: ExportType,
+  ): Promise<string> {
+    const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
+    const filteredAttempts: StoredAttempt[] = attempts.filter(
+      attempt => attempt.user.email === email,
+    );
+    switch (exportType) {
+      case ExportType.JSON: {
+        return JSON.stringify(filteredAttempts, null, 2);
+      }
+      case ExportType.CSV: {
+        return this.generateCSVFromAttempts(filteredAttempts);
+      }
+    }
+  }
+
+  public async exportQuizAttemptsByCompanyQuiz(
+    companyId: string,
+    quizId: string,
+    exportType: ExportType,
+  ): Promise<string> {
+    const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
+    const filteredAttempts: StoredAttempt[] = attempts.filter(
+      attempt => attempt.company.id === companyId && attempt.quiz.id === quizId,
+    );
+    switch (exportType) {
+      case ExportType.JSON: {
+        return JSON.stringify(filteredAttempts, null, 2);
+      }
+      case ExportType.CSV: {
+        return this.generateCSVFromAttempts(filteredAttempts);
+      }
+    }
+  }
+
+  private async getAttemptsFromCache(): Promise<StoredAttempt[]> {
+    this.logger.log('Fetching quiz attempts from Redis for JSON export.');
+    const keys: string[] = await this.redisService.keys('quiz_attempt:*');
+    const attempts: string[] = await Promise.all(
+      keys.map(key => this.redisService.get(key)),
+    );
+    return attempts.map(attempt => JSON.parse(attempt));
+  }
+
+  private async generateCSVFromAttempts(
+    filteredAttempts: StoredAttempt[],
+  ): Promise<string> {
+    const csvStringifier = createObjectCsvStringifier({
+      header: [
+        { id: 'companyName', title: 'Company Name' },
+        { id: 'userEmail', title: 'User Email' },
+        { id: 'quizTitle', title: 'Quiz Title' },
+        { id: 'questionContent', title: 'Question Content' },
+        { id: 'usersAnswersContent', title: "User's Answers Content" },
+        { id: 'correctAnswer', title: 'Correct Answer' },
+      ],
+    });
+
+    const csvRecords = filteredAttempts.flatMap(attempt =>
+      attempt.questionsAndAnswers.map((qa: QuestionWithAnswers) => {
+        const correctAnswer: Answer = qa.question.answerOptions.find(
+          (ans: Answer) => ans.isCorrect,
+        );
+        const answersList: string[] = [];
+        qa.answersIdList.forEach(answerId => {
+          answersList.push(
+            qa.question.answerOptions.find((ans: Answer) => ans.id === answerId)
+              .content,
+          );
+        });
+        return {
+          companyName: attempt.company.companyName,
+          userEmail: attempt.user.email,
+          quizTitle: attempt.quiz.title,
+          questionContent: qa.question.content,
+          usersAnswers: answersList.join(', '),
+          correctAnswer: correctAnswer.content,
+        };
+      }),
+    );
+    return (
+      csvStringifier.getHeaderString() +
+      csvStringifier.stringifyRecords(csvRecords)
+    );
   }
 }

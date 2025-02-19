@@ -34,4 +34,16 @@ export class RedisService {
   public async del(key: string): Promise<number> {
     return this.redis.del(key);
   }
+  async keys(pattern: string): Promise<string[]> {
+    const stream = this.redis.scanStream({ match: pattern });
+    const keys: string[] = [];
+
+    return new Promise((resolve, reject) => {
+      stream.on('data', (resultKeys: string[]) => {
+        keys.push(...resultKeys);
+      });
+      stream.on('end', () => resolve(keys));
+      stream.on('error', err => reject(err));
+    });
+  }
 }

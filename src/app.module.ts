@@ -22,6 +22,12 @@ import { Request } from './request/entities/request.entity';
 import { MemberModule } from './members/member.module';
 import { Member } from './members/entities/member.entity';
 import { Invitation } from './invitation/entities/invitation.entity';
+import { QuizModule } from './quiz/quiz.module';
+import { QuizAttemptModule } from './quiz-attempt/quiz-attempt.module';
+import { Quiz } from './quiz/entities/quiz.entity';
+import { QuizAttempt } from './quiz-attempt/entities/quiz-attempt.entity';
+import { Answer } from './quiz/entities/answer.entity';
+import { Question } from './quiz/entities/question.entity';
 
 @Global()
 @Module({
@@ -38,6 +44,10 @@ import { Invitation } from './invitation/entities/invitation.entity';
       Request,
       Invitation,
       Member,
+      Quiz,
+      QuizAttempt,
+      Answer,
+      Question,
     ]),
     UserModule,
     RoleModule,
@@ -47,6 +57,8 @@ import { Invitation } from './invitation/entities/invitation.entity';
     InvitationModule,
     RequestModule,
     MemberModule,
+    QuizModule,
+    QuizAttemptModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthService, UserService],

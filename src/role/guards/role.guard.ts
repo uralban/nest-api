@@ -12,6 +12,8 @@ import { Request } from '../../request/entities/request.entity';
 import { Reflector } from '@nestjs/core';
 import { Member } from '../../members/entities/member.entity';
 import { MemberService } from '../../members/member.service';
+import { QuizService } from '../../quiz/quiz.service';
+import { Quiz } from '../../quiz/entities/quiz.entity';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
@@ -19,6 +21,7 @@ export class RoleGuard implements CanActivate {
     private readonly roleService: RoleService,
     private readonly requestService: RequestService,
     private readonly memberService: MemberService,
+    private readonly quizService: QuizService,
     private configService: ConfigService,
     private readonly reflector: Reflector,
   ) {}
@@ -31,6 +34,7 @@ export class RoleGuard implements CanActivate {
     let companyId = request.body.companyId || request.params.companyId;
     const requestId = request.params.requestId;
     const memberId = request.params.memberId;
+    const quizId = request.params.quizId;
 
     if (requestId && !companyId) {
       const request: Request =
@@ -41,6 +45,11 @@ export class RoleGuard implements CanActivate {
     if (memberId && !companyId) {
       const member: Member = await this.memberService.getMemberById(memberId);
       companyId = member.company.id;
+    }
+
+    if (quizId && !companyId) {
+      const quiz: Quiz = await this.quizService.getQuizById(quizId);
+      companyId = quiz.company.id;
     }
 
     const requiredRoles = this.reflector.get<string[]>(

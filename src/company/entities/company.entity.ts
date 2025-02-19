@@ -13,6 +13,7 @@ import { Visibility } from '../../global/enums/visibility.enum';
 import { Member } from '../../members/entities/member.entity';
 import { Request } from '../../request/entities/request.entity';
 import { Invitation } from '../../invitation/entities/invitation.entity';
+import { Quiz } from '../../quiz/entities/quiz.entity';
 
 @Entity()
 export class Company extends BaseCustomEntity {
@@ -25,7 +26,7 @@ export class Company extends BaseCustomEntity {
   companyDescription: string;
 
   @ApiProperty({
-    description: 'Company logo url',
+    description: 'Company description',
   })
   @Column({ type: 'varchar', default: '' })
   logoUrl: string;
@@ -43,12 +44,19 @@ export class Company extends BaseCustomEntity {
   @JoinColumn({ name: 'ownerId' })
   owner: Relation<User>;
 
+  @ApiProperty({ description: 'Members list', type: () => Member })
   @OneToMany(() => Member, member => member.company)
   members: Member[];
 
+  @ApiProperty({ description: 'Requests list', type: () => Request })
   @OneToMany(() => Request, request => request.company)
   requests: Request[];
 
+  @ApiProperty({ description: 'Invitations list', type: () => Invitation })
   @OneToMany(() => Invitation, invitation => invitation.company)
   invitations: Invitation[];
+
+  @ApiProperty({ description: 'Quizzes list', type: () => Quiz })
+  @OneToMany(() => Quiz, quiz => quiz.company)
+  quizzes: Quiz[];
 }

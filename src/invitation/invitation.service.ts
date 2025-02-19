@@ -26,7 +26,7 @@ export class InvitationService {
     private invitationRepository: Repository<Invitation>,
     @InjectRepository(Request)
     private requestRepository: Repository<Request>,
-    private memberService: MemberService
+    private memberService: MemberService,
   ) {}
   public async createInvite(
     createInvitationDto: CreateInvitationDto,
@@ -134,9 +134,7 @@ export class InvitationService {
     }
   }
 
-  public async declineInvitation(
-    inviteId: string
-  ): Promise<ResultMessage> {
+  public async declineInvitation(inviteId: string): Promise<ResultMessage> {
     this.logger.log('Attempting to decline invitation.');
     const invite: Invitation = await this.getInviteById(inviteId);
     invite.status = InviteRequestStatus.DECLINED;

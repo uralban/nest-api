@@ -5,8 +5,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  UsePipes,
-  ValidationPipe,
   HttpStatus,
 } from '@nestjs/common';
 import { MemberService } from './member.service';
@@ -14,20 +12,13 @@ import { UpdateMemberRoleDto } from './dto/update-member.dto';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
 import { ResultMessage } from '../global/interfaces/result-message';
-import { Company } from '../company/entities/company.entity';
 import { Roles } from '../global/decorators/roles.decorator';
 import { RoleGuard } from '../role/guards/role.guard';
+import { RoleEnum } from '../global/enums/role.enum';
 
 @ApiTags('Company members')
 @Controller('members')
 @UseGuards(AuthGuard)
-@UsePipes(
-  new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: false,
-    transform: true,
-  }),
-)
 export class MemberController {
   constructor(private readonly membersService: MemberService) {}
 
@@ -41,7 +32,6 @@ export class MemberController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: "The member's role has been successfully updated.",
-    type: Company,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
@@ -51,7 +41,7 @@ export class MemberController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @Roles('admin', 'owner')
+  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
   @UseGuards(RoleGuard)
   public async changeRoleFromMember(
     @Param('memberId') memberId: string,
@@ -73,13 +63,12 @@ export class MemberController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The member has been successfully deleted.',
-    type: Company,
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Member not found.',
   })
-  @Roles('admin', 'owner')
+  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
   @UseGuards(RoleGuard)
   public async removeMember(
     @Param('memberId') memberId: string,

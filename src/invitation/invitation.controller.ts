@@ -8,8 +8,6 @@ import {
   Delete,
   HttpStatus,
   UseGuards,
-  UsePipes,
-  ValidationPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
   Query,
@@ -27,17 +25,11 @@ import { PaginationDto } from '../global/dto/pagination.dto';
 import { RoleGuard } from '../role/guards/role.guard';
 import { Roles } from '../global/decorators/roles.decorator';
 import { ExcludeRoleGuard } from '../role/guards/exclude-role.guard';
+import { RoleEnum } from '../global/enums/role.enum';
 
 @ApiTags('Company invitations')
 @Controller('invitation')
 @UseGuards(AuthGuard)
-@UsePipes(
-  new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: false,
-    transform: true,
-  }),
-)
 export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
 
@@ -55,7 +47,7 @@ export class InvitationController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @Roles('admin', 'owner')
+  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
   @UseGuards(RoleGuard)
   public async createInvite(
     @Body() createInvitationDto: CreateInvitationDto,
@@ -102,7 +94,7 @@ export class InvitationController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @Roles('member', 'owner', 'admin')
+  @Roles(RoleEnum.MEMBER, RoleEnum.OWNER, RoleEnum.ADMIN)
   @UseGuards(ExcludeRoleGuard)
   public async acceptInvite(
     @Param('inviteId') inviteId: string,
@@ -130,11 +122,10 @@ export class InvitationController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Bad request.',
   })
-  @Roles('member')
+  @Roles(RoleEnum.MEMBER)
   @UseGuards(ExcludeRoleGuard)
   public async declineInvitation(
     @Param('inviteId') inviteId: string,
-    @GetUserEmail() email: string,
   ): Promise<ResultMessage> {
     return this.invitationService.declineInvitation(inviteId);
   }

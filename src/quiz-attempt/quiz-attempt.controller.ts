@@ -3,11 +3,9 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
-  Header,
   HttpStatus,
-  NotFoundException,
   Param,
-  Post,
+  Post, Query,
   StreamableFile,
   UseGuards,
   UseInterceptors,
@@ -29,6 +27,8 @@ import { RoleEnum } from '../global/enums/role.enum';
 import { RoleGuard } from '../role/guards/role.guard';
 import { ExportType } from '../global/enums/export-type.enum';
 import { Readable } from 'stream';
+import { ExportAttemptOptionsDto } from './dto/export-attempt-options.dto';
+import { ExportQuizAttemptsByCompanyData } from '../global/interfaces/export-quiz-attempts-by-company-data.interface';
 
 @ApiTags('Quiz Attempts')
 @Controller('quiz-attempt')
@@ -96,46 +96,46 @@ export class QuizAttemptController {
     return this.quizAttemptService.getUserTotalScore(email);
   }
 
-  @Get('export/json/user')
+  @Get('export/user/:format')
   @ApiOperation({
-    summary: 'Export quiz attempts as JSON',
-    description: 'Exports all quiz attempts for user in JSON format.',
+    summary: 'Export quiz attempts',
+    description: 'Exports all quiz attempts for user in the specified format (JSON or CSV).',
   })
-  @ApiProduces('application/json')
+  @ApiParam({
+    name: 'format',
+    type: 'string',
+    description: 'Export data format',
+  })
+  @ApiProduces('application/json', 'text/csv')
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Successful JSON export',
+    description: 'Successful export',
   })
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'No quiz attempts found for user',
   })
-  @Header('Content-Type', 'application/json')
-  @Header('Content-Disposition', 'attachment; filename=user_quiz_attempts.json')
-  async exportQuizAttemptsByUserToJSON(
+  async exportQuizAttemptsByUser(
     @GetUserEmail() email: string,
+    @Param('format') format: ExportType,
   ): Promise<StreamableFile> {
-    const csvData: string =
-      await this.quizAttemptService.exportQuizAttemptsByUser(
-        email,
-        ExportType.JSON,
-      );
-    if (!csvData) {
-      throw new NotFoundException('No quiz attempts found for user.');
-    }
-    const stream: Readable = Readable.from([csvData]);
-    return new StreamableFile(stream);
+    const data: ExportQuizAttemptsByCompanyData = await this.quizAttemptService.exportQuizAttemptsByUser(email, format);
+    const stream: Readable = Readable.from([data.data]);
+    return new StreamableFile(stream, {
+      type: data.contentType,
+      disposition: `attachment; filename=${data.filename}`,
+    });
   }
 
-  @Get('export/json/company/:companyId')
+  @Get('export/company/:format')
   @ApiOperation({
-    summary: 'Export quiz attempts as JSON',
-    description: 'Exports all quiz attempts for a company in JSON format.',
+    summary: 'Export quiz attempts',
+    description: 'Exports all quiz attempts for user in the specified format (JSON or CSV).',
   })
   @ApiParam({
-    name: 'companyId',
+    name: 'format',
     type: 'string',
-    description: 'Company ID to export data for',
+    description: 'Export data format',
   })
   @ApiProduces('application/json')
   @ApiResponse({
@@ -148,287 +148,19 @@ export class QuizAttemptController {
   })
   @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
   @UseGuards(RoleGuard)
-  @Header('Content-Type', 'application/json')
-  @Header(
-    'Content-Disposition',
-    'attachment; filename=company_quiz_attempts.json',
-  )
-  public async exportQuizAttemptsByCompanyToJSON(
-    @Param('companyId') companyId: string,
+  public async exportQuizAttemptsByCompany(
+    @Param('format') format: ExportType,
+    @Query() exportAttemptOptionsDto: ExportAttemptOptionsDto,
   ): Promise<StreamableFile> {
-    const jsonData: string =
+    const data: ExportQuizAttemptsByCompanyData =
       await this.quizAttemptService.exportQuizAttemptsByCompany(
-        companyId,
-        ExportType.JSON,
+        format,
+        exportAttemptOptionsDto,
       );
-    if (!jsonData) {
-      throw new NotFoundException('No quiz attempts found for the company.');
-    }
-    const stream: Readable = Readable.from([jsonData]);
-    return new StreamableFile(stream);
-  }
-
-  @Get('export/json/company-user/:companyId/:userId')
-  @ApiOperation({
-    summary: 'Export quiz attempts as JSON',
-    description: 'Exports all quiz attempts for a company in JSON format.',
-  })
-  @ApiParam({
-    name: 'companyId',
-    type: 'string',
-    description: 'Company ID to export data for',
-  })
-  @ApiParam({
-    name: 'userId',
-    type: 'string',
-    description: 'User ID to export data for',
-  })
-  @ApiProduces('application/json')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successful JSON export',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'No quiz attempts found for the company',
-  })
-  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
-  @UseGuards(RoleGuard)
-  @Header('Content-Type', 'application/json')
-  @Header(
-    'Content-Disposition',
-    'attachment; filename=company_user_quiz_attempts.json',
-  )
-  public async exportQuizAttemptsByCompanyUserToJSON(
-    @Param('companyId') companyId: string,
-    @Param('userId') userId: string,
-  ): Promise<StreamableFile> {
-    const jsonData: string =
-      await this.quizAttemptService.exportQuizAttemptsByCompanyUser(
-        companyId,
-        userId,
-        ExportType.JSON,
-      );
-    if (!jsonData) {
-      throw new NotFoundException('No quiz attempts found for the company.');
-    }
-    const stream: Readable = Readable.from([jsonData]);
-    return new StreamableFile(stream);
-  }
-
-  @Get('export/json/company-quiz/:companyId/:quizId')
-  @ApiOperation({
-    summary: 'Export quiz attempts as JSON',
-    description: 'Exports all quiz attempts for a company in JSON format.',
-  })
-  @ApiParam({
-    name: 'companyId',
-    type: 'string',
-    description: 'Company ID to export data for',
-  })
-  @ApiParam({
-    name: 'quizId',
-    type: 'string',
-    description: 'Quiz ID to export data for',
-  })
-  @ApiProduces('application/json')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successful JSON export',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'No quiz attempts found for the company',
-  })
-  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
-  @UseGuards(RoleGuard)
-  @Header('Content-Type', 'application/json')
-  @Header(
-    'Content-Disposition',
-    'attachment; filename=company_quiz_quiz_attempts.json',
-  )
-  public async exportQuizAttemptsByCompanyQuizToJSON(
-    @Param('companyId') companyId: string,
-    @Param('quizId') quizId: string,
-  ): Promise<StreamableFile> {
-    const jsonData: string =
-      await this.quizAttemptService.exportQuizAttemptsByCompanyQuiz(
-        companyId,
-        quizId,
-        ExportType.JSON,
-      );
-    if (!jsonData) {
-      throw new NotFoundException('No quiz attempts found for the company.');
-    }
-    const stream: Readable = Readable.from([jsonData]);
-    return new StreamableFile(stream);
-  }
-
-  @Get('export/csv/user')
-  @ApiOperation({
-    summary: 'Export quiz attempts as CSV',
-    description: 'Exports all quiz attempts for user in CSV format.',
-  })
-  @ApiProduces('text/csv')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successful CSV export',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'No quiz attempts found for user',
-  })
-  @Header('Content-Type', 'text/csv')
-  @Header('Content-Disposition', 'attachment; filename=user_quiz_attempts.csv')
-  async exportQuizAttemptsByUserToCSV(
-    @GetUserEmail() email: string,
-  ): Promise<StreamableFile> {
-    const csvData: string =
-      await this.quizAttemptService.exportQuizAttemptsByUser(
-        email,
-        ExportType.CSV,
-      );
-    if (!csvData) {
-      throw new NotFoundException('No quiz attempts found for user.');
-    }
-    const stream: Readable = Readable.from([csvData]);
-    return new StreamableFile(stream);
-  }
-
-  @Get('export/csv/company/:companyId')
-  @ApiOperation({
-    summary: 'Export quiz attempts as CSV',
-    description: 'Exports all quiz attempts for a company in CSV format.',
-  })
-  @ApiParam({
-    name: 'companyId',
-    type: 'string',
-    description: 'Company ID to export data for',
-  })
-  @ApiProduces('text/csv')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successful CSV export',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'No quiz attempts found for the company',
-  })
-  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
-  @UseGuards(RoleGuard)
-  @Header('Content-Type', 'text/csv')
-  @Header(
-    'Content-Disposition',
-    'attachment; filename=company_quiz_attempts.csv',
-  )
-  async exportQuizAttemptsByCompanyToCSV(
-    @Param('companyId') companyId: string,
-  ): Promise<StreamableFile> {
-    const csvData: string =
-      await this.quizAttemptService.exportQuizAttemptsByCompany(
-        companyId,
-        ExportType.CSV,
-      );
-    if (!csvData) {
-      throw new NotFoundException('No quiz attempts found for the company.');
-    }
-    const stream: Readable = Readable.from([csvData]);
-    return new StreamableFile(stream);
-  }
-
-  @Get('export/csv/company-user/:companyId/:userId')
-  @ApiOperation({
-    summary: 'Export quiz attempts as CSV',
-    description: 'Exports all quiz attempts for a company in CSV format.',
-  })
-  @ApiParam({
-    name: 'companyId',
-    type: 'string',
-    description: 'Company ID to export data for',
-  })
-  @ApiParam({
-    name: 'userId',
-    type: 'string',
-    description: 'User ID to export data for',
-  })
-  @ApiProduces('text/csv')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successful CSV export',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'No quiz attempts found for the company',
-  })
-  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
-  @UseGuards(RoleGuard)
-  @Header('Content-Type', 'text/csv')
-  @Header(
-    'Content-Disposition',
-    'attachment; filename=company_user_quiz_attempts.csv',
-  )
-  async exportQuizAttemptsByCompanyUserToCSV(
-    @Param('companyId') companyId: string,
-    @Param('userId') userId: string,
-  ): Promise<StreamableFile> {
-    const csvData: string =
-      await this.quizAttemptService.exportQuizAttemptsByCompanyUser(
-        companyId,
-        userId,
-        ExportType.CSV,
-      );
-    if (!csvData) {
-      throw new NotFoundException('No quiz attempts found for the company.');
-    }
-    const stream: Readable = Readable.from([csvData]);
-    return new StreamableFile(stream);
-  }
-
-  @Get('export/csv/company-quiz/:companyId/:quizId')
-  @ApiOperation({
-    summary: 'Export quiz attempts as CSV',
-    description: 'Exports all quiz attempts for a company in CSV format.',
-  })
-  @ApiParam({
-    name: 'companyId',
-    type: 'string',
-    description: 'Company ID to export data for',
-  })
-  @ApiParam({
-    name: 'quizId',
-    type: 'string',
-    description: 'Quiz ID to export data for',
-  })
-  @ApiProduces('text/csv')
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successful CSV export',
-  })
-  @ApiResponse({
-    status: HttpStatus.NOT_FOUND,
-    description: 'No quiz attempts found for the company',
-  })
-  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
-  @UseGuards(RoleGuard)
-  @Header('Content-Type', 'text/csv')
-  @Header(
-    'Content-Disposition',
-    'attachment; filename=company_quiz_quiz_attempts.csv',
-  )
-  async exportQuizAttemptsByCompanyQuizToCSV(
-    @Param('companyId') companyId: string,
-    @Param('quizId') quizId: string,
-  ): Promise<StreamableFile> {
-    const csvData: string =
-      await this.quizAttemptService.exportQuizAttemptsByCompanyQuiz(
-        companyId,
-        quizId,
-        ExportType.CSV,
-      );
-    if (!csvData) {
-      throw new NotFoundException('No quiz attempts found for the company.');
-    }
-    const stream: Readable = Readable.from([csvData]);
-    return new StreamableFile(stream);
+    const stream: Readable = Readable.from([data.data]);
+    return new StreamableFile(stream, {
+      type: data.contentType,
+      disposition: `attachment; filename=${data.filename}`,
+    });
   }
 }

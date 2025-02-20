@@ -17,6 +17,8 @@ import { Answer } from '../quiz/entities/answer.entity';
 import { createObjectCsvStringifier } from 'csv-writer';
 import { StoredAttempt } from '../global/interfaces/stored-attempt.interface';
 import { ExportType } from '../global/enums/export-type.enum';
+import { ExportAttemptOptionsDto } from './dto/export-attempt-options.dto';
+import { ExportQuizAttemptsByCompanyData } from '../global/interfaces/export-quiz-attempts-by-company-data.interface';
 
 @Injectable()
 export class QuizAttemptService {
@@ -174,10 +176,55 @@ export class QuizAttemptService {
   }
 
   public async exportQuizAttemptsByCompany(
-    companyId: string,
     exportType: ExportType,
-  ): Promise<string> {
+    exportAttemptOptionsDto: ExportAttemptOptionsDto
+  ): Promise<ExportQuizAttemptsByCompanyData> {
+    const contentType: string = exportType === ExportType.JSON ? 'application/json' : 'text/csv';
+    let filename: string;
     const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
+    if (exportAttemptOptionsDto.userId && !exportAttemptOptionsDto.quizId) {
+      const data: string = await this.exportQuizAttemptsByCompanyUser(
+        attempts,
+        exportAttemptOptionsDto.companyId,
+        exportAttemptOptionsDto.userId,
+        exportType
+      )
+      if (!data) {
+        throw new NotFoundException('No quiz attempts found for the company user.');
+      }
+      filename = `company_user_quiz_attempts.${exportType}`;
+      return { data, contentType, filename };
+    }
+    if (!exportAttemptOptionsDto.userId && exportAttemptOptionsDto.quizId) {
+      const data: string = await this.exportQuizAttemptsByCompanyQuiz(
+        attempts,
+        exportAttemptOptionsDto.companyId,
+        exportAttemptOptionsDto.quizId,
+        exportType
+      )
+      if (!data) {
+        throw new NotFoundException('No quiz attempts found for the company quiz.');
+      }
+      filename = `company_quiz_quiz_attempts.${exportType}`;
+      return { data, contentType, filename };
+    }
+    const data: string = await this.exportQuizAttemptsByAllCompany(
+      attempts,
+      exportAttemptOptionsDto.companyId,
+      exportType
+    )
+    if (!data) {
+      throw new NotFoundException('No quiz attempts found for the company.');
+    }
+    filename = `company_quiz_attempts.${exportType}`;
+    return { data, contentType, filename };
+  }
+
+  public async exportQuizAttemptsByAllCompany(
+    attempts: StoredAttempt[],
+    companyId: string,
+    exportType: ExportType
+  ): Promise<string> {
     const filteredAttempts: StoredAttempt[] = attempts.filter(
       attempt => attempt.company.id === companyId,
     );
@@ -192,13 +239,32 @@ export class QuizAttemptService {
   }
 
   public async exportQuizAttemptsByCompanyUser(
+    attempts: StoredAttempt[],
     companyId: string,
     userId: string,
     exportType: ExportType,
   ): Promise<string> {
-    const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
     const filteredAttempts: StoredAttempt[] = attempts.filter(
       attempt => attempt.company.id === companyId && attempt.user.id === userId,
+    );
+    switch (exportType) {
+      case ExportType.JSON: {
+        return JSON.stringify(filteredAttempts, null, 2);
+      }
+      case ExportType.CSV: {
+        return this.generateCSVFromAttempts(filteredAttempts);
+      }
+    }
+  }
+
+  public async exportQuizAttemptsByCompanyQuiz(
+    attempts: StoredAttempt[],
+    companyId: string,
+    quizId: string,
+    exportType: ExportType,
+  ): Promise<string> {
+    const filteredAttempts: StoredAttempt[] = attempts.filter(
+      attempt => attempt.company.id === companyId && attempt.quiz.id === quizId,
     );
     switch (exportType) {
       case ExportType.JSON: {
@@ -213,36 +279,27 @@ export class QuizAttemptService {
   public async exportQuizAttemptsByUser(
     email: string,
     exportType: ExportType,
-  ): Promise<string> {
+  ): Promise<ExportQuizAttemptsByCompanyData> {
+    const contentType: string = exportType === ExportType.JSON ? 'application/json' : 'text/csv';
+    const filename: string = `user_quiz_attempts.${exportType}`;
     const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
     const filteredAttempts: StoredAttempt[] = attempts.filter(
       attempt => attempt.user.email === email,
     );
     switch (exportType) {
       case ExportType.JSON: {
-        return JSON.stringify(filteredAttempts, null, 2);
+        const data: string = JSON.stringify(filteredAttempts, null, 2);
+        if (!data) {
+          throw new NotFoundException('No quiz attempts found for user.');
+        }
+        return { data, contentType, filename };
       }
       case ExportType.CSV: {
-        return this.generateCSVFromAttempts(filteredAttempts);
-      }
-    }
-  }
-
-  public async exportQuizAttemptsByCompanyQuiz(
-    companyId: string,
-    quizId: string,
-    exportType: ExportType,
-  ): Promise<string> {
-    const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
-    const filteredAttempts: StoredAttempt[] = attempts.filter(
-      attempt => attempt.company.id === companyId && attempt.quiz.id === quizId,
-    );
-    switch (exportType) {
-      case ExportType.JSON: {
-        return JSON.stringify(filteredAttempts, null, 2);
-      }
-      case ExportType.CSV: {
-        return this.generateCSVFromAttempts(filteredAttempts);
+        const data: string = await this.generateCSVFromAttempts(filteredAttempts);
+        if (!data) {
+          throw new NotFoundException('No quiz attempts found for user.');
+        }
+        return { data, contentType, filename };
       }
     }
   }

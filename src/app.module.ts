@@ -28,6 +28,7 @@ import { Quiz } from './quiz/entities/quiz.entity';
 import { QuizAttempt } from './quiz-attempt/entities/quiz-attempt.entity';
 import { Answer } from './quiz/entities/answer.entity';
 import { Question } from './quiz/entities/question.entity';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Global()
 @Module({
@@ -59,6 +60,7 @@ import { Question } from './quiz/entities/question.entity';
     MemberModule,
     QuizModule,
     QuizAttemptModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthService, UserService],

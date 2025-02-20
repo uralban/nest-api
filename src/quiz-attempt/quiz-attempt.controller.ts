@@ -5,7 +5,8 @@ import {
   Get,
   HttpStatus,
   Param,
-  Post, Query,
+  Post,
+  Query,
   StreamableFile,
   UseGuards,
   UseInterceptors,
@@ -99,7 +100,8 @@ export class QuizAttemptController {
   @Get('export/user/:format')
   @ApiOperation({
     summary: 'Export quiz attempts',
-    description: 'Exports all quiz attempts for user in the specified format (JSON or CSV).',
+    description:
+      'Exports all quiz attempts for user in the specified format (JSON or CSV).',
   })
   @ApiParam({
     name: 'format',
@@ -119,7 +121,8 @@ export class QuizAttemptController {
     @GetUserEmail() email: string,
     @Param('format') format: ExportType,
   ): Promise<StreamableFile> {
-    const data: ExportQuizAttemptsByCompanyData = await this.quizAttemptService.exportQuizAttemptsByUser(email, format);
+    const data: ExportQuizAttemptsByCompanyData =
+      await this.quizAttemptService.exportQuizAttemptsByUser(email, format);
     const stream: Readable = Readable.from([data.data]);
     return new StreamableFile(stream, {
       type: data.contentType,
@@ -130,7 +133,8 @@ export class QuizAttemptController {
   @Get('export/company/:format')
   @ApiOperation({
     summary: 'Export quiz attempts',
-    description: 'Exports all quiz attempts for user in the specified format (JSON or CSV).',
+    description:
+      'Exports all quiz attempts for user in the specified format (JSON or CSV).',
   })
   @ApiParam({
     name: 'format',

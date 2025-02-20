@@ -21,5 +21,6 @@ import { RoleModule } from '../role/role.module';
     QuizModule,
     UserModule,
   ],
+  exports: [QuizAttemptService],
 })
 export class QuizAttemptModule {}

@@ -154,10 +154,12 @@ export class QuizAttemptService {
       this.logger.error('User not found.');
       throw new NotFoundException(`User with email ${email} not found.`);
     }
+    if (user.attempts.length === 0)
+      throw new NotFoundException('No quiz attempts found');
     return { message: this.scoreExecutor(user.attempts) };
   }
 
-  private scoreExecutor(quizAttemptList: QuizAttempt[]): string {
+  public scoreExecutor(quizAttemptList: QuizAttempt[]): string {
     const totalAnswersScoreData: AnswersScoreData = quizAttemptList.reduce(
       (res, attempt) => {
         return {
@@ -177,9 +179,10 @@ export class QuizAttemptService {
 
   public async exportQuizAttemptsByCompany(
     exportType: ExportType,
-    exportAttemptOptionsDto: ExportAttemptOptionsDto
+    exportAttemptOptionsDto: ExportAttemptOptionsDto,
   ): Promise<ExportQuizAttemptsByCompanyData> {
-    const contentType: string = exportType === ExportType.JSON ? 'application/json' : 'text/csv';
+    const contentType: string =
+      exportType === ExportType.JSON ? 'application/json' : 'text/csv';
     let filename: string;
     const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
     if (exportAttemptOptionsDto.userId && !exportAttemptOptionsDto.quizId) {
@@ -187,10 +190,12 @@ export class QuizAttemptService {
         attempts,
         exportAttemptOptionsDto.companyId,
         exportAttemptOptionsDto.userId,
-        exportType
-      )
+        exportType,
+      );
       if (!data) {
-        throw new NotFoundException('No quiz attempts found for the company user.');
+        throw new NotFoundException(
+          'No quiz attempts found for the company user.',
+        );
       }
       filename = `company_user_quiz_attempts.${exportType}`;
       return { data, contentType, filename };
@@ -200,10 +205,12 @@ export class QuizAttemptService {
         attempts,
         exportAttemptOptionsDto.companyId,
         exportAttemptOptionsDto.quizId,
-        exportType
-      )
+        exportType,
+      );
       if (!data) {
-        throw new NotFoundException('No quiz attempts found for the company quiz.');
+        throw new NotFoundException(
+          'No quiz attempts found for the company quiz.',
+        );
       }
       filename = `company_quiz_quiz_attempts.${exportType}`;
       return { data, contentType, filename };
@@ -211,8 +218,8 @@ export class QuizAttemptService {
     const data: string = await this.exportQuizAttemptsByAllCompany(
       attempts,
       exportAttemptOptionsDto.companyId,
-      exportType
-    )
+      exportType,
+    );
     if (!data) {
       throw new NotFoundException('No quiz attempts found for the company.');
     }
@@ -223,7 +230,7 @@ export class QuizAttemptService {
   public async exportQuizAttemptsByAllCompany(
     attempts: StoredAttempt[],
     companyId: string,
-    exportType: ExportType
+    exportType: ExportType,
   ): Promise<string> {
     const filteredAttempts: StoredAttempt[] = attempts.filter(
       attempt => attempt.company.id === companyId,
@@ -280,7 +287,8 @@ export class QuizAttemptService {
     email: string,
     exportType: ExportType,
   ): Promise<ExportQuizAttemptsByCompanyData> {
-    const contentType: string = exportType === ExportType.JSON ? 'application/json' : 'text/csv';
+    const contentType: string =
+      exportType === ExportType.JSON ? 'application/json' : 'text/csv';
     const filename: string = `user_quiz_attempts.${exportType}`;
     const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
     const filteredAttempts: StoredAttempt[] = attempts.filter(
@@ -295,7 +303,8 @@ export class QuizAttemptService {
         return { data, contentType, filename };
       }
       case ExportType.CSV: {
-        const data: string = await this.generateCSVFromAttempts(filteredAttempts);
+        const data: string =
+          await this.generateCSVFromAttempts(filteredAttempts);
         if (!data) {
           throw new NotFoundException('No quiz attempts found for user.');
         }

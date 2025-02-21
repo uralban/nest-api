@@ -15,7 +15,7 @@ import { NotificationModule } from '../notification/notification.module';
     forwardRef(() => InvitationModule),
     forwardRef(() => RequestModule),
     RoleModule,
-    NotificationModule
+    forwardRef(() => NotificationModule),
   ],
   exports: [QuizService],
 })

@@ -62,8 +62,8 @@ export class NotificationGateway {
     }
     await this.notificationService.createNotification(
       userId,
-      companyId,
       notification,
+      companyId,
     );
   }
 }

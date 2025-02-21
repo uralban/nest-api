@@ -16,15 +16,15 @@ export class NotificationService {
 
   public async createNotification(
     userId: string,
-    companyId: string,
     notificationDto: CreateNotificationDto,
+    companyId?: string,
   ): Promise<Notification> {
     this.logger.log('Attempting to create a new notification.');
     const notification: Notification = this.notificationRepository.create({
       text: notificationDto.message,
       status: NotificationStatus.UNREAD,
       user: { id: userId },
-      company: { id: companyId },
+      company: companyId ? { id: companyId } : null,
     });
     this.logger.log('Saving the new notification to the database.');
     try {

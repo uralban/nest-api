@@ -1,23 +1,34 @@
 import {
-  Controller,
-  Post,
   Body,
-  UseGuards,
-  HttpStatus,
-  Get,
-  UseInterceptors,
   ClassSerializerInterceptor,
+  Controller,
+  Get,
+  HttpStatus,
   Param,
+  Post, Query,
+  StreamableFile,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { QuizAttemptService } from './quiz-attempt.service';
 import { CreateQuizAttemptDto } from './dto/create-quiz-attempt.dto';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiParam,
+  ApiProduces,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthGuard } from '../auth/auth.guard';
 import { ResultMessage } from '../global/interfaces/result-message';
 import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
 import { Roles } from '../global/decorators/roles.decorator';
 import { RoleEnum } from '../global/enums/role.enum';
 import { RoleGuard } from '../role/guards/role.guard';
+import { ExportType } from '../global/enums/export-type.enum';
+import { Readable } from 'stream';
+import { ExportAttemptOptionsDto } from './dto/export-attempt-options.dto';
+import { ExportQuizAttemptsByCompanyData } from '../global/interfaces/export-quiz-attempts-by-company-data.interface';
 
 @ApiTags('Quiz Attempts')
 @Controller('quiz-attempt')
@@ -83,5 +94,73 @@ export class QuizAttemptController {
     @GetUserEmail() email: string,
   ): Promise<ResultMessage> {
     return this.quizAttemptService.getUserTotalScore(email);
+  }
+
+  @Get('export/user/:format')
+  @ApiOperation({
+    summary: 'Export quiz attempts',
+    description: 'Exports all quiz attempts for user in the specified format (JSON or CSV).',
+  })
+  @ApiParam({
+    name: 'format',
+    type: 'string',
+    description: 'Export data format',
+  })
+  @ApiProduces('application/json', 'text/csv')
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successful export',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'No quiz attempts found for user',
+  })
+  async exportQuizAttemptsByUser(
+    @GetUserEmail() email: string,
+    @Param('format') format: ExportType,
+  ): Promise<StreamableFile> {
+    const data: ExportQuizAttemptsByCompanyData = await this.quizAttemptService.exportQuizAttemptsByUser(email, format);
+    const stream: Readable = Readable.from([data.data]);
+    return new StreamableFile(stream, {
+      type: data.contentType,
+      disposition: `attachment; filename=${data.filename}`,
+    });
+  }
+
+  @Get('export/company/:format')
+  @ApiOperation({
+    summary: 'Export quiz attempts',
+    description: 'Exports all quiz attempts for user in the specified format (JSON or CSV).',
+  })
+  @ApiParam({
+    name: 'format',
+    type: 'string',
+    description: 'Export data format',
+  })
+  @ApiProduces('application/json')
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successful JSON export',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'No quiz attempts found for the company',
+  })
+  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
+  @UseGuards(RoleGuard)
+  public async exportQuizAttemptsByCompany(
+    @Param('format') format: ExportType,
+    @Query() exportAttemptOptionsDto: ExportAttemptOptionsDto,
+  ): Promise<StreamableFile> {
+    const data: ExportQuizAttemptsByCompanyData =
+      await this.quizAttemptService.exportQuizAttemptsByCompany(
+        format,
+        exportAttemptOptionsDto,
+      );
+    const stream: Readable = Readable.from([data.data]);
+    return new StreamableFile(stream, {
+      type: data.contentType,
+      disposition: `attachment; filename=${data.filename}`,
+    });
   }
 }

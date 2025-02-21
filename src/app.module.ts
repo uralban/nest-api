@@ -31,6 +31,7 @@ import { Question } from './quiz/entities/question.entity';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { NotificationModule } from './notification/notification.module';
 import { Notification } from './notification/entities/notification.entity';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Global()
 @Module({
@@ -65,6 +66,7 @@ import { Notification } from './notification/entities/notification.entity';
     QuizAttemptModule,
     AnalyticsModule,
     NotificationModule,
+    ScheduleModule.forRoot({})
   ],
   controllers: [AppController],
   providers: [AppService, AuthService, UserService],

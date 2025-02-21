@@ -1,11 +1,11 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import * as schedule from 'node-schedule';
+import { Injectable, Logger } from '@nestjs/common';
 import { QuizAttemptService } from '../quiz-attempt/quiz-attempt.service';
 import { NotificationService } from './notification.service';
 import { User } from '../user/entities/user.entity';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
-export class NotificationSchedulerService implements OnModuleInit {
+export class NotificationSchedulerService {
   private readonly logger = new Logger(NotificationSchedulerService.name);
 
   constructor(
@@ -13,18 +13,10 @@ export class NotificationSchedulerService implements OnModuleInit {
     private notificationService: NotificationService,
   ) {}
 
-  public onModuleInit(): void {
-    this.scheduleDailyCheck();
-  }
-
-  private scheduleDailyCheck(): void {
-    schedule.scheduleJob('0 0 * * *', async () => {
-      this.logger.log('Running daily quiz completion check.');
-      await this.checkUserQuizCompletion();
-    });
-  }
-
-  private async checkUserQuizCompletion() {
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+    name: 'notifications',
+  })
+  public async checkUserQuizCompletion() {
     const inactiveUsers: User[] =
       await this.quizAttemptService.getUsersWithLongInactivity(1);
     this.logger.log(`Found ${inactiveUsers.length} inactive users.`);

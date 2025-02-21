@@ -5,6 +5,7 @@ import { MemberModule } from '../members/member.module';
 import { InvitationModule } from '../invitation/invitation.module';
 import { RoleModule } from '../role/role.module';
 import { RequestModule } from '../request/request.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   controllers: [QuizController],
@@ -14,6 +15,7 @@ import { RequestModule } from '../request/request.module';
     forwardRef(() => InvitationModule),
     forwardRef(() => RequestModule),
     RoleModule,
+    NotificationModule
   ],
   exports: [QuizService],
 })

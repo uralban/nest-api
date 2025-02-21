@@ -17,7 +17,7 @@ import { QuizModule } from '../quiz/quiz.module';
     forwardRef(() => InvitationModule),
     forwardRef(() => RequestModule),
     forwardRef(() => QuizModule),
-    QuizAttemptModule
-  ]
+    QuizAttemptModule,
+  ],
 })
 export class AnalyticsModule {}

@@ -10,6 +10,9 @@ import { Answer } from './entities/answer.entity';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationDto } from '../global/dto/pagination.dto';
 import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
+import { NotificationGateway } from '../notification/notification.gateway';
+import { Member } from '../members/entities/member.entity';
+import { CreateNotificationDto } from '../notification/dto/create-notification.dto';
 
 @Injectable()
 export class QuizService {
@@ -22,6 +25,9 @@ export class QuizService {
     private readonly questionRepository: Repository<Question>,
     @InjectRepository(Answer)
     private readonly answerRepository: Repository<Answer>,
+    @InjectRepository(Member)
+    private readonly memberRepository: Repository<Member>,
+    private notificationGateway: NotificationGateway,
   ) {}
 
   public async createNewQuiz(
@@ -54,6 +60,7 @@ export class QuizService {
         }
       }
       this.logger.log('Successfully created new quiz.');
+      await this.sendNotificationToAllCompanyMembers(companyId);
       return { message: 'The quiz has been created.' };
     } catch (error) {
       this.logger.error('Error while saving quiz', error.stack);
@@ -147,5 +154,33 @@ export class QuizService {
     } catch (error) {
       this.logger.error(`Failed to remove quiz from the database`, error.stack);
     }
+  }
+
+  public async sendNotificationToAllCompanyMembers(
+    companyId: string,
+  ): Promise<void> {
+    this.logger.log('Attempting to send notifications to all company users.');
+    const members: Member[] = await this.memberRepository.find({
+      where: {
+        company: { id: companyId },
+      },
+      relations: {
+        company: true,
+        user: true,
+      },
+    });
+    if (!members.length) {
+      throw new NotFoundException(`No members found for this company`);
+    }
+    const notification: CreateNotificationDto = {
+      message: `New quiz was created in company ${members[0].company.companyName}.`,
+    };
+    members.forEach((member: Member) => {
+      this.notificationGateway.sendNotificationToUser(
+        member.user.id,
+        companyId,
+        notification,
+      );
+    });
   }
 }

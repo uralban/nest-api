@@ -14,6 +14,7 @@ import { Member } from '../../members/entities/member.entity';
 import { Request } from '../../request/entities/request.entity';
 import { Invitation } from '../../invitation/entities/invitation.entity';
 import { Quiz } from '../../quiz/entities/quiz.entity';
+import { Notification } from '../../notification/entities/notification.entity';
 
 @Entity()
 export class Company extends BaseCustomEntity {
@@ -59,4 +60,11 @@ export class Company extends BaseCustomEntity {
   @ApiProperty({ description: 'Quizzes list', type: () => Quiz })
   @OneToMany(() => Quiz, quiz => quiz.company)
   quizzes: Quiz[];
+
+  @ApiProperty({
+    description: 'Company notifications',
+    type: () => Notification,
+  })
+  @OneToMany(() => Notification, notification => notification.company)
+  notifications: Notification[];
 }

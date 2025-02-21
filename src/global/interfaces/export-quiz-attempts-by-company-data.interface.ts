@@ -1,5 +1,5 @@
 export interface ExportQuizAttemptsByCompanyData {
-  data: string,
-  contentType: string,
-  filename: string
+  data: string;
+  contentType: string;
+  filename: string;
 }

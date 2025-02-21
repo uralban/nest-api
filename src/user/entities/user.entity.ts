@@ -6,6 +6,7 @@ import { Company } from '../../company/entities/company.entity';
 import { Member } from '../../members/entities/member.entity';
 import { Invitation } from '../../invitation/entities/invitation.entity';
 import { QuizAttempt } from '../../quiz-attempt/entities/quiz-attempt.entity';
+import { Notification } from '../../notification/entities/notification.entity';
 
 @Entity()
 export class User extends BaseCustomEntity {
@@ -49,4 +50,8 @@ export class User extends BaseCustomEntity {
   @ApiProperty({ description: 'Quiz attempts list', type: () => Invitation })
   @OneToMany(() => QuizAttempt, attempt => attempt.user)
   attempts?: QuizAttempt[];
+
+  @ApiProperty({ description: 'User notifications', type: () => Notification })
+  @OneToMany(() => Notification, notification => notification.user)
+  notifications?: Notification[];
 }

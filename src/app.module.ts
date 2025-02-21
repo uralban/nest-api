@@ -29,6 +29,8 @@ import { QuizAttempt } from './quiz-attempt/entities/quiz-attempt.entity';
 import { Answer } from './quiz/entities/answer.entity';
 import { Question } from './quiz/entities/question.entity';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { NotificationModule } from './notification/notification.module';
+import { Notification } from './notification/entities/notification.entity';
 
 @Global()
 @Module({
@@ -49,6 +51,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
       QuizAttempt,
       Answer,
       Question,
+      Notification
     ]),
     UserModule,
     RoleModule,
@@ -61,6 +64,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     QuizModule,
     QuizAttemptModule,
     AnalyticsModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthService, UserService],

@@ -51,7 +51,7 @@ import { Notification } from './notification/entities/notification.entity';
       QuizAttempt,
       Answer,
       Question,
-      Notification
+      Notification,
     ]),
     UserModule,
     RoleModule,

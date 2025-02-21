@@ -38,7 +38,7 @@ export class QuizAttemptService {
 
   public async createNewQuizAttempt(
     createQuizAttemptDto: CreateQuizAttemptDto,
-  ) {
+  ): Promise<ResultMessage> {
     this.logger.log('Attempting to create a new quiz attempt.');
     const { quizId, userId, questions } = createQuizAttemptDto;
     const quiz: Quiz = await this.quizService.getQuizById(quizId);
@@ -362,5 +362,16 @@ export class QuizAttemptService {
       csvStringifier.getHeaderString() +
       csvStringifier.stringifyRecords(csvRecords)
     );
+  }
+
+  public async getUsersWithLongInactivity(days: number): Promise<User[]> {
+    const dateThreshold = new Date();
+    dateThreshold.setDate(dateThreshold.getDate() - days);
+    return await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.quizAttempts', 'quizAttempt')
+      .where('quizAttempt.createdAt < :dateThreshold', { dateThreshold })
+      .groupBy('user.id')
+      .getMany();
   }
 }

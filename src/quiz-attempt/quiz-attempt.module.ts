@@ -18,7 +18,7 @@ import { RoleModule } from '../role/role.module';
     forwardRef(() => InvitationModule),
     forwardRef(() => RequestModule),
     RedisModule,
-    QuizModule,
+    forwardRef(() => QuizModule),
     UserModule,
   ],
   exports: [QuizAttemptService],

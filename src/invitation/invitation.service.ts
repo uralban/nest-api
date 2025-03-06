@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -63,6 +64,7 @@ export class InvitationService {
       return { message: 'The invite has been created.' };
     } catch (error) {
       this.logger.error('Error while saving invite', error.stack);
+      throw new InternalServerErrorException('Error while saving invite');
     }
   }
 
@@ -95,14 +97,6 @@ export class InvitationService {
   public async acceptInvite(inviteId: string): Promise<ResultMessage> {
     this.logger.log('Attempting to accept invitation.');
     const invite: Invitation = await this.getInviteById(inviteId);
-    const userIsMember: boolean = await this.memberService.checkUserMemberById(
-      invite.invitedUser.id,
-      invite.company.id,
-    );
-    if (userIsMember) {
-      this.logger.error('User already in company.');
-      throw new ForbiddenException('You already in company');
-    }
     invite.status = InviteRequestStatus.ACCEPTED;
     this.logger.log('Check the same request. ');
     const request: Request = await this.requestRepository.findOne({
@@ -131,6 +125,7 @@ export class InvitationService {
         `Failed to accept invitation with ID ${inviteId}`,
         error.stack,
       );
+      throw new InternalServerErrorException('Failed to accept invitation');
     }
   }
 
@@ -148,6 +143,7 @@ export class InvitationService {
         `Failed to decline invitation with ID ${inviteId}`,
         error.stack,
       );
+      throw new InternalServerErrorException('Failed to decline invitation');
     }
   }
 

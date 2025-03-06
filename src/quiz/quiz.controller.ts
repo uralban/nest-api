@@ -23,6 +23,8 @@ import { ResultMessage } from '../global/interfaces/result-message';
 import { Quiz } from './entities/quiz.entity';
 import { PaginationOptionsDto } from '../global/dto/pagination-options.dto';
 import { PaginationDto } from '../global/dto/pagination.dto';
+import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
+import { QuizStartResult } from '../global/interfaces/quiz-start-result.interface';
 
 @ApiTags('Quizzes')
 @Controller('quizzes')
@@ -77,6 +79,31 @@ export class QuizController {
     return this.quizService.getQuizzesForCompanyById(companyId, pageOptionsDto);
   }
 
+  @Get('start/:quizId')
+  @ApiOperation({ summary: 'Get quiz by id for starting quiz.' })
+  @ApiParam({
+    name: 'quizId',
+    description: 'The ID of the quiz to get.',
+    example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The quiz with the specified ID without correct answer flags.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Quiz not found.',
+  })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER, RoleEnum.MEMBER)
+  @UseGuards(RoleGuard)
+  public async getQuizByIdForStart(
+    @Param('quizId') quizId: string,
+    @GetUserEmail() userEmail: string,
+  ): Promise<QuizStartResult> {
+    return this.quizService.getQuizByIdForStart(quizId, userEmail);
+  }
+
   @Get(':quizId')
   @ApiOperation({ summary: 'Get quiz by id.' })
   @ApiParam({
@@ -93,6 +120,8 @@ export class QuizController {
     description: 'Quiz not found.',
   })
   @UseInterceptors(ClassSerializerInterceptor)
+  @Roles(RoleEnum.ADMIN, RoleEnum.OWNER)
+  @UseGuards(RoleGuard)
   public async getQuizById(@Param('quizId') quizId: string): Promise<Quiz> {
     return this.quizService.getQuizById(quizId);
   }

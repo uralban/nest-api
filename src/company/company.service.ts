@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { ResultMessage } from '../global/interfaces/result-message';
@@ -187,6 +192,9 @@ export class CompanyService {
       return updatedCompany;
     } catch (error) {
       this.logger.error(`Failed to update company with ID ${id}`, error.stack);
+      throw new InternalServerErrorException(
+        `Failed to update company with ID ${id}`,
+      );
     }
   }
 
@@ -201,13 +209,16 @@ export class CompanyService {
         .createQueryBuilder()
         .update(Company)
         .set({ visibility: updateCompanyVisibilityDto.visibility })
-        .where('ownerId = :userId', { userId: userId })
+        .where('ownerId = :userId', { userId })
         .execute();
       return { message: 'Update companies visibility status successfully.' };
     } catch (error) {
       this.logger.error(
         `Failed to update companies visibility status`,
         error.stack,
+      );
+      throw new InternalServerErrorException(
+        `Failed to update companies visibility status`,
       );
     }
   }
@@ -228,6 +239,9 @@ export class CompanyService {
       this.logger.error(
         `Failed to remove company from the database`,
         error.stack,
+      );
+      throw new InternalServerErrorException(
+        `Failed to remove company from the database`,
       );
     }
   }

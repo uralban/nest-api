@@ -31,7 +31,10 @@ export class RoleGuard implements CanActivate {
     const userEmail: string =
       request.user[this.configService.get('AUTH0_USER_EMAIL_SELECTOR')] ||
       request.user.email;
-    let companyId = request.body.companyId || request.params.companyId;
+    let companyId =
+      request.body.companyId ||
+      request.params.companyId ||
+      request.query.companyId;
     const requestId = request.params.requestId;
     const memberId = request.params.memberId;
     const quizId = request.params.quizId || request.body.quizId;

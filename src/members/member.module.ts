@@ -4,12 +4,14 @@ import { MemberController } from './member.controller';
 import { RoleModule } from '../role/role.module';
 import { RequestModule } from '../request/request.module';
 import { QuizModule } from '../quiz/quiz.module';
+import { InvitationModule } from '../invitation/invitation.module';
 
 @Module({
   controllers: [MemberController],
   providers: [MemberService],
   imports: [
     forwardRef(() => RequestModule),
+    forwardRef(() => InvitationModule),
     forwardRef(() => QuizModule),
     RoleModule,
   ],

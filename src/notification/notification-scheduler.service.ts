@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { QuizAttemptService } from '../quiz-attempt/quiz-attempt.service';
-import { NotificationService } from './notification.service';
 import { User } from '../user/entities/user.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { NotificationGateway } from './notification.gateway';
 
 @Injectable()
 export class NotificationSchedulerService {
@@ -10,7 +10,7 @@ export class NotificationSchedulerService {
 
   constructor(
     private quizAttemptService: QuizAttemptService,
-    private notificationService: NotificationService,
+    private notificationGateway: NotificationGateway,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
@@ -22,10 +22,13 @@ export class NotificationSchedulerService {
     this.logger.log(`Found ${inactiveUsers.length} inactive users.`);
 
     for (const user of inactiveUsers) {
-      await this.notificationService.createNotification(user.id, {
-        message: `You haven't taken a quiz in a while. Come back and test your knowledge!`,
-      });
-      this.logger.log(`Notification sent to user ${user.emailLogin}`);
+      await this.notificationGateway.sendNotificationToUser(
+        user.id,
+        {
+          message: `You haven't taken a quiz in a while. Come back and test your knowledge!`,
+        },
+        undefined,
+      );
     }
   }
 }

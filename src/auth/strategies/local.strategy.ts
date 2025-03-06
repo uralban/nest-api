@@ -31,7 +31,6 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     const response = request.res as Response;
     const accessToken: string = request.cookies['access_token'];
     const refreshToken: string = request.cookies['refresh_token'];
-
     if (!accessToken && !refreshToken) {
       throw new UnauthorizedException('No authorized');
     }

@@ -1,39 +1,49 @@
 import {
-  WebSocketGateway,
-  SubscribeMessage,
-  MessageBody,
-  WebSocketServer,
   ConnectedSocket,
+  MessageBody,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
 import { NotificationService } from './notification.service';
 import { Server, Socket } from 'socket.io';
 import { ApiTags } from '@nestjs/swagger';
-import { Logger } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { CreateNotificationDto } from './dto/create-notification.dto';
+import { Notification } from './entities/notification.entity';
+import { WsAuthGuard } from './ws-auth.guard';
 
 @ApiTags('Notifications websocket')
-@WebSocketGateway({ cors: true })
+@WebSocketGateway({
+  cors: {
+    origin: process.env.CORS_ALLOWED_ORIGINS,
+    methods: process.env.CORS_ALLOWED_METHODS,
+    credentials: true,
+  },
+  transports: ['websocket', 'polling'],
+})
+@UseGuards(WsAuthGuard)
 export class NotificationGateway {
-  private readonly logger = new Logger(NotificationGateway.name);
+  private readonly logger: Logger = new Logger(NotificationGateway.name);
 
   @WebSocketServer()
   server: Server;
 
-  private activeUsers = new Map<string, string>();
+  private activeUsers: Map<string, string> = new Map<string, string>();
 
   constructor(private readonly notificationService: NotificationService) {}
 
-  handleConnection(client: Socket) {
-    const userId = client.handshake.query.userId as string;
+  public handleConnection(client: Socket): void {
+    const userId: string = client.handshake.query.userId as string;
     if (userId) {
       this.activeUsers.set(userId, client.id);
       this.logger.log(`User ${userId} connected with socket ID: ${client.id}`);
     }
   }
 
-  handleDisconnect(client: Socket) {
-    const userId = [...this.activeUsers.entries()].find(
-      ([, id]) => id === client.id,
+  public handleDisconnect(client: Socket): void {
+    const userId: string = [...this.activeUsers.entries()].find(
+      ([, id]): boolean => id === client.id,
     )?.[0];
     if (userId) {
       this.activeUsers.delete(userId);
@@ -42,7 +52,7 @@ export class NotificationGateway {
   }
 
   @SubscribeMessage('subscribeNotifications')
-  handleSubscribe(
+  public handleSubscribe(
     @MessageBody() userId: string,
     @ConnectedSocket() client: Socket,
   ): void {
@@ -52,18 +62,27 @@ export class NotificationGateway {
 
   public async sendNotificationToUser(
     userId: string,
-    companyId: string,
     notification: CreateNotificationDto,
+    companyId: string | undefined,
   ): Promise<void> {
-    const socketId = this.activeUsers.get(userId);
+    let newNotification: Notification;
+    try {
+      newNotification = await this.notificationService.createNotification(
+        userId,
+        notification,
+        companyId,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to create notification for user ${userId}`,
+        error.stack,
+      );
+      return;
+    }
+    const socketId: string = this.activeUsers.get(userId);
     if (socketId) {
-      this.server.to(socketId).emit('notification', notification.message);
+      this.server.to(socketId).emit('notification', newNotification);
       this.logger.log(`Notification sent to user ${userId}.`);
     }
-    await this.notificationService.createNotification(
-      userId,
-      notification,
-      companyId,
-    );
   }
 }

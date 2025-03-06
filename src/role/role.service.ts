@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Role } from './entities/role.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,7 +17,7 @@ export class RoleService {
     const roles: Role[] = await this.roleRepository.find();
     if (!roles.length) {
       this.logger.error('Roles not found.');
-      throw new Error('Roles not found.');
+      throw new NotFoundException('Roles not found.');
     }
     this.logger.log('Roles found.');
     return roles;
@@ -29,7 +29,7 @@ export class RoleService {
     });
     if (!role) {
       this.logger.error('Roles not found.');
-      throw new Error('Roles not found.');
+      throw new NotFoundException('Roles not found.');
     }
     this.logger.log('Roles found.');
     return role;

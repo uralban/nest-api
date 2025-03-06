@@ -41,7 +41,7 @@ export class InvitationController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'The invite has been successfully created.',
-    type: Request,
+    type: Invitation,
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,

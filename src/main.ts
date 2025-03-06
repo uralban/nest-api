@@ -4,9 +4,11 @@ import { GeneralResponseInterceptor } from './global/interceptors/general-respon
 import { ErrorHandlerFilter } from './global/filters/error-handler-filter/error-handler.filter';
 import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.useWebSocketAdapter(new IoAdapter(app));
 
   app.enableCors({
     origin: process.env.CORS_ALLOWED_ORIGINS,

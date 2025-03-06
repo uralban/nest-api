@@ -62,7 +62,7 @@ describe('ErrorHandlerFilterFilter', () => {
     expect(mockResponse.json).toHaveBeenCalledWith({
       status_code: HttpStatus.NOT_FOUND,
       detail: null,
-      result: { message: 'Custom error object' },
+      result: 'Custom error object',
     });
   });
 });

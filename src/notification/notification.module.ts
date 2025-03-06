@@ -4,6 +4,9 @@ import { NotificationGateway } from './notification.gateway';
 import { NotificationsController } from './notification.controller';
 import { NotificationSchedulerService } from './notification-scheduler.service';
 import { QuizAttemptModule } from '../quiz-attempt/quiz-attempt.module';
+import { AuthModule } from '../auth/auth.module';
+import { RedisModule } from '../redis/redis.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   controllers: [NotificationsController],
@@ -13,7 +16,10 @@ import { QuizAttemptModule } from '../quiz-attempt/quiz-attempt.module';
     NotificationSchedulerService,
   ],
   imports: [
+    forwardRef(() => AuthModule),
     forwardRef(() => QuizAttemptModule),
+    forwardRef(() => RedisModule),
+    forwardRef(() => UserModule),
   ],
   exports: [NotificationService, NotificationGateway],
 })

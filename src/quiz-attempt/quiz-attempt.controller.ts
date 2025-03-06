@@ -53,8 +53,12 @@ export class QuizAttemptController {
   @UseGuards(RoleGuard)
   public async createNewQuizAttempt(
     @Body() createQuizAttemptDto: CreateQuizAttemptDto,
+    @GetUserEmail() userEmail: string,
   ): Promise<ResultMessage> {
-    return this.quizAttemptService.createNewQuizAttempt(createQuizAttemptDto);
+    return this.quizAttemptService.createNewQuizAttempt(
+      createQuizAttemptDto,
+      userEmail,
+    );
   }
 
   @Get('company-score/:companyId')

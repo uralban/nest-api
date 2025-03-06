@@ -15,6 +15,8 @@ import { ResultMessage } from '../global/interfaces/result-message';
 import { Roles } from '../global/decorators/roles.decorator';
 import { RoleGuard } from '../role/guards/role.guard';
 import { RoleEnum } from '../global/enums/role.enum';
+import { ExcludeRoleGuard } from '../role/guards/exclude-role.guard';
+import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
 
 @ApiTags('Company members')
 @Controller('members')
@@ -51,6 +53,30 @@ export class MemberController {
       memberId,
       updateMemberRoleDto,
     );
+  }
+
+  @Delete('self/:companyId')
+  @ApiOperation({ summary: 'Delete self \from members' })
+  @ApiParam({
+    name: 'companyId',
+    description: 'The ID of the company.',
+    example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'The member has been successfully deleted.',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Member not found.',
+  })
+  @Roles(RoleEnum.OWNER)
+  @UseGuards(ExcludeRoleGuard)
+  public async selfRemoveMember(
+    @GetUserEmail() userEmail: string,
+    @Param('companyId') companyId: string,
+  ): Promise<ResultMessage> {
+    return this.membersService.selfRemoveMember(userEmail, companyId);
   }
 
   @Delete(':memberId')

@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -63,6 +64,7 @@ export class RequestService {
       return { message: 'The request has been created.' };
     } catch (error) {
       this.logger.error('Error while saving request', error.stack);
+      throw new InternalServerErrorException('Error while saving request');
     }
   }
 
@@ -122,6 +124,7 @@ export class RequestService {
         `Failed to accept request with ID ${requestId}`,
         error.stack,
       );
+      throw new InternalServerErrorException('Error while saving request');
     }
   }
 
@@ -139,6 +142,7 @@ export class RequestService {
         `Failed to decline request with ID ${requestId}`,
         error.stack,
       );
+      throw new InternalServerErrorException('Error while saving request');
     }
   }
 

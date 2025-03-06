@@ -13,10 +13,11 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from 'src/auth/auth.guard';
 import { NotificationService } from './notification.service';
 import { GetUserEmail } from '../global/decorators/get-user-email.decorator';
 import { Notification } from './entities/notification.entity';
+import { ResultMessage } from '../global/interfaces/result-message';
+import { AuthGuard } from '../auth/auth.guard';
 
 @ApiTags('Notifications')
 @ApiBearerAuth()
@@ -44,7 +45,7 @@ export class NotificationsController {
     return this.notificationService.getUserNotifications(email);
   }
 
-  @Patch(':notificationId/read')
+  @Patch('read/:notificationId')
   @ApiOperation({
     summary: 'Mark notification as read',
   })
@@ -63,7 +64,7 @@ export class NotificationsController {
   })
   public async markNotificationAsRead(
     @Param('notificationId') notificationId: string,
-  ): Promise<void> {
+  ): Promise<ResultMessage> {
     return this.notificationService.markNotificationAsRead(notificationId);
   }
 }

@@ -39,6 +39,7 @@ export class MemberService {
       return { message: "Successfully accepted member's role." };
     } catch (error) {
       this.logger.error(`Failed to accept member`, error.stack);
+      throw new InternalServerErrorException('Error while saving member');
     }
   }
 
@@ -56,6 +57,39 @@ export class MemberService {
         `Failed to remove member from the database`,
         error.stack,
       );
+      throw new InternalServerErrorException('Error while removing member');
+    }
+  }
+
+  public async selfRemoveMember(
+    email: string,
+    companyId: string,
+  ): Promise<ResultMessage> {
+    const member: Member = await this.memberRepository
+      .createQueryBuilder('member')
+      .leftJoinAndSelect('member.company', 'company')
+      .leftJoinAndSelect('member.user', 'user')
+      .leftJoinAndSelect('member.role', 'role')
+      .where('user.emailLogin = :email', { email })
+      .andWhere('company.id = :companyId', { companyId })
+      .getOne();
+    if (!member) {
+      this.logger.error('Member not found.');
+      throw new NotFoundException(`Member not found.`);
+    }
+    this.logger.log(`Deleting member self.`);
+    try {
+      await this.memberRepository.remove(member);
+      this.logger.log('Successfully removed member from the database.');
+      return {
+        message: `The member was successfully deleted.`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to remove member from the database`,
+        error.stack,
+      );
+      throw new InternalServerErrorException('Error while removing member');
     }
   }
 

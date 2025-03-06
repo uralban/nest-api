@@ -19,7 +19,7 @@ export class QuizAttempt extends BaseCustomEntity {
     example: 0,
     default: 0,
   })
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: 'decimal', scale: 4, default: 0 })
   answersScore: number;
 
   @ApiProperty({

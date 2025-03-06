@@ -1,9 +1,15 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from './entities/notification.entity';
 import { NotificationStatus } from '../global/enums/notification-status.enum';
+import { ResultMessage } from '../global/interfaces/result-message';
 
 @Injectable()
 export class NotificationService {
@@ -17,7 +23,7 @@ export class NotificationService {
   public async createNotification(
     userId: string,
     notificationDto: CreateNotificationDto,
-    companyId?: string,
+    companyId: string | undefined,
   ): Promise<Notification> {
     this.logger.log('Attempting to create a new notification.');
     const notification: Notification = this.notificationRepository.create({
@@ -34,6 +40,7 @@ export class NotificationService {
       return resultNotification;
     } catch (error) {
       this.logger.error('Error while saving notification', error.stack);
+      throw new InternalServerErrorException('Error while saving notification');
     }
   }
 
@@ -46,12 +53,14 @@ export class NotificationService {
       order: { createdAt: 'DESC' },
     });
     if (!notifications.length) {
-      throw new NotFoundException(`No notifications found for user ${email}`);
+      return [];
     }
     return notifications;
   }
 
-  public async markNotificationAsRead(notificationId: string): Promise<void> {
+  public async markNotificationAsRead(
+    notificationId: string,
+  ): Promise<ResultMessage> {
     this.logger.log('Attempting to mark the notifications is read.');
     const notification: Notification =
       await this.notificationRepository.findOne({
@@ -69,9 +78,12 @@ export class NotificationService {
     try {
       await this.notificationRepository.save(notification);
       this.logger.log(`Notification ${notificationId} marked as read`);
-      return;
+      return {
+        message: 'Completed successfully.',
+      };
     } catch (error) {
       this.logger.error('Error while saving notification', error.stack);
+      throw new InternalServerErrorException('Error while saving notification');
     }
   }
 }

@@ -17,6 +17,9 @@ import { RoleGuard } from '../role/guards/role.guard';
 import { QuizScore } from '../global/interfaces/quiz-score.interface';
 import { UserQuizScore } from '../global/interfaces/user-score.interface';
 import { UserLastAttempt } from '../global/interfaces/user-last-attempt.interface';
+import { CompanyUsersWithScore } from '../global/interfaces/company-users-with-score.interface';
+import { QuizWithLastDate } from '../global/interfaces/quiz-with-last-date.interface';
+import { UsersQuizzesWithScore } from '../global/interfaces/users-quizzes-with-score.interface';
 
 @ApiTags('Analytics')
 @Controller('analytics')
@@ -39,8 +42,32 @@ export class AnalyticsController {
   })
   public async getUserQuizScores(
     @GetUserEmail() email: string,
-  ): Promise<QuizScore[]> {
+  ): Promise<UsersQuizzesWithScore[]> {
     return this.analyticsService.getUserQuizScores(email);
+  }
+
+  @Get('user/company-score/:companyId')
+  @ApiOperation({
+    summary: 'Get user score for company',
+  })
+  @ApiParam({
+    name: 'companyId',
+    type: 'string',
+    description: 'Company Id',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Returns the average score',
+  })
+  @ApiResponse({
+    status: HttpStatus.BAD_REQUEST,
+    description: 'Bad request.',
+  })
+  public async getUserQuizCompanyScore(
+    @Param('companyId') companyId: string,
+    @GetUserEmail() email: string,
+  ): Promise<QuizScore> {
+    return this.analyticsService.getUserQuizCompanyScore(companyId, email);
   }
 
   @Get('user/quiz-with-time')
@@ -57,7 +84,7 @@ export class AnalyticsController {
   })
   public async getUserLastAttempts(
     @GetUserEmail() email: string,
-  ): Promise<QuizScore[]> {
+  ): Promise<QuizWithLastDate[]> {
     return this.analyticsService.getUserLastAttempts(email);
   }
 
@@ -87,20 +114,15 @@ export class AnalyticsController {
     return this.analyticsService.getCompanyUserScores(companyId);
   }
 
-  @Get('company/quiz-scores/:companyId/:userId')
+  @Get('company/quiz-scores/:companyId')
   @ApiOperation({
     summary:
-      'Get list of average scores for all quizzes of a selected user with time dynamics',
+      'Get list of average scores for all quizzes in company of a selected user with time dynamics',
   })
   @ApiParam({
     name: 'companyId',
     type: 'string',
     description: 'Company Id',
-  })
-  @ApiParam({
-    name: 'userId',
-    type: 'string',
-    description: 'User Id',
   })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -114,9 +136,8 @@ export class AnalyticsController {
   @UseGuards(RoleGuard)
   public async getUserQuizScoresInCompany(
     @Param('companyId') companyId: string,
-    @Param('userId') userId: string,
-  ): Promise<QuizScore[]> {
-    return this.analyticsService.getUserQuizScoresInCompany(companyId, userId);
+  ): Promise<CompanyUsersWithScore[]> {
+    return this.analyticsService.getUserQuizScoresInCompany(companyId);
   }
 
   @Get('company/users-last-attempts/:companyId')

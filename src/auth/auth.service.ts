@@ -1,5 +1,6 @@
 import {
   Injectable,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
   UnauthorizedException,
@@ -10,7 +11,6 @@ import { Auth } from './entities/auth.entity';
 import { RedisService } from '../redis/redis.service';
 import { AppService } from '../app.service';
 import { User } from '../user/entities/user.entity';
-import { Role } from '../role/entities/role.entity';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { TokenSet } from '../global/interfaces/token-set';
@@ -26,8 +26,6 @@ export class AuthService {
     private refreshTokenRepository: Repository<Auth>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
-    @InjectRepository(Role)
-    private roleRepository: Repository<Role>,
     private redisService: RedisService,
     private localJwtService: LocalJwtService,
   ) {}
@@ -53,7 +51,7 @@ export class AuthService {
     user?: User,
   ): Promise<void> {
     const existAuth: Auth = await this.refreshTokenRepository.findOne({
-      where: { user: { emailLogin: user.emailLogin } },
+      where: { user: { emailLogin: userEmail } },
     });
     if (!existAuth) {
       const currentUser: User = user
@@ -69,6 +67,9 @@ export class AuthService {
         return;
       } catch (error) {
         this.logger.error(`Failed to update Auth data`, error.stack);
+        throw new InternalServerErrorException(
+          'Failed to update refresh token.',
+        );
       }
     }
     existAuth.refreshToken = refreshToken;
@@ -179,6 +180,12 @@ export class AuthService {
     const user: User = await this.userRepository.findOne({
       where: {
         emailLogin: email,
+      },
+      relations: {
+        companyMemberships: {
+          company: true,
+          role: true,
+        },
       },
     });
     if (!user) {

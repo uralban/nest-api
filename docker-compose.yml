@@ -41,6 +41,25 @@ services:
       timeout: 3s
       retries: 3
 
+  postgres-db-test:
+    image: postgres:17.2-alpine3.21
+    container_name: postgres-db-test
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME_TEST}
+    ports:
+      - '5433:5432'
+    volumes:
+      - db_data_test:/var/lib/postgresql/data
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME_TEST}'" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   redis:
     container_name: redis
     build:
@@ -104,11 +123,12 @@ services:
       - .env
     command: npm run test:e2e
     depends_on:
-      postgres-db:
+      postgres-db-test:
         condition: service_healthy
       redis:
         condition: service_healthy
 
 volumes:
   db_data:
+  db_data_test:
   redis-data:

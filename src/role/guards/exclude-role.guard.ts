@@ -28,7 +28,7 @@ export class ExcludeRoleGuard implements CanActivate {
     const userEmail: string =
       request.user[this.configService.get('AUTH0_USER_EMAIL_SELECTOR')] ||
       request.user.email;
-    let companyId;
+    let companyId = request.params.companyId;
     const requestId = request.params.requestId;
     const inviteId = request.params.inviteId;
 

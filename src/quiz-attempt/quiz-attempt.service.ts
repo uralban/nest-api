@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { AppService } from '../app.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Quiz } from '../quiz/entities/quiz.entity';
@@ -38,11 +43,12 @@ export class QuizAttemptService {
 
   public async createNewQuizAttempt(
     createQuizAttemptDto: CreateQuizAttemptDto,
+    email: string,
   ): Promise<ResultMessage> {
     this.logger.log('Attempting to create a new quiz attempt.');
-    const { quizId, userId, questions } = createQuizAttemptDto;
+    const { quizId, questions } = createQuizAttemptDto;
     const quiz: Quiz = await this.quizService.getQuizById(quizId);
-    const user: User = await this.userService.getUserById(userId);
+    const user: User = await this.userService.getUserByEmail(email);
     let answersScore: number = 0;
     const questionCount: number = questions.length;
     const questionsAndAnswerData: QuestionWithAnswers[] = [];
@@ -99,6 +105,7 @@ export class QuizAttemptService {
       this.logger.log('Successfully save new quiz attempt in DB.');
     } catch (error) {
       this.logger.error('Error while saving quiz attempt', error.stack);
+      throw new InternalServerErrorException('Error while saving quiz attempt');
     }
     this.logger.log('Create attempt data to cache saving.');
     const attemptId: string = newQuizAttempt.id;
@@ -120,6 +127,9 @@ export class QuizAttemptService {
         'Error while saving quiz attempt data in cache',
         error.stack,
       );
+      throw new InternalServerErrorException(
+        'Error while saving quiz attempt data in cache',
+      );
     }
     return { message: 'Attempt saved successfully.' };
   }
@@ -135,7 +145,7 @@ export class QuizAttemptService {
         user: { emailLogin: email },
       },
     });
-    if (!attempts) {
+    if (!attempts.length) {
       this.logger.error('Attempts not found.');
       throw new NotFoundException(`Attempts not found.`);
     }
@@ -154,8 +164,7 @@ export class QuizAttemptService {
       this.logger.error('User not found.');
       throw new NotFoundException(`User with email ${email} not found.`);
     }
-    if (user.attempts.length === 0)
-      throw new NotFoundException('No quiz attempts found');
+    if (user.attempts.length === 0) return { message: '0' };
     return { message: this.scoreExecutor(user.attempts) };
   }
 
@@ -163,8 +172,9 @@ export class QuizAttemptService {
     const totalAnswersScoreData: AnswersScoreData = quizAttemptList.reduce(
       (res, attempt) => {
         return {
-          answersScore: res.answersScore + attempt.answersScore,
-          questionCount: res.questionCount + attempt.questionCount,
+          answersScore: Number(res.answersScore) + Number(attempt.answersScore),
+          questionCount:
+            Number(res.questionCount) + Number(attempt.questionCount),
         };
       },
       {
@@ -291,23 +301,20 @@ export class QuizAttemptService {
       exportType === ExportType.JSON ? 'application/json' : 'text/csv';
     const filename: string = `user_quiz_attempts.${exportType}`;
     const attempts: StoredAttempt[] = await this.getAttemptsFromCache();
+    if (!attempts) {
+      throw new NotFoundException('No quiz attempts found for user.');
+    }
     const filteredAttempts: StoredAttempt[] = attempts.filter(
       attempt => attempt.user.email === email,
     );
     switch (exportType) {
       case ExportType.JSON: {
         const data: string = JSON.stringify(filteredAttempts, null, 2);
-        if (!data) {
-          throw new NotFoundException('No quiz attempts found for user.');
-        }
         return { data, contentType, filename };
       }
       case ExportType.CSV: {
         const data: string =
           await this.generateCSVFromAttempts(filteredAttempts);
-        if (!data) {
-          throw new NotFoundException('No quiz attempts found for user.');
-        }
         return { data, contentType, filename };
       }
     }
@@ -353,7 +360,7 @@ export class QuizAttemptService {
           userEmail: attempt.user.email,
           quizTitle: attempt.quiz.title,
           questionContent: qa.question.content,
-          usersAnswers: answersList.join(', '),
+          usersAnswersContent: answersList.join(', '),
           correctAnswer: correctAnswer.content,
         };
       }),
@@ -369,9 +376,8 @@ export class QuizAttemptService {
     dateThreshold.setDate(dateThreshold.getDate() - days);
     return await this.userRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect('user.quizAttempts', 'quizAttempt')
-      .where('quizAttempt.createdAt < :dateThreshold', { dateThreshold })
-      .groupBy('user.id')
+      .leftJoinAndSelect('user.attempts', 'attempts')
+      .where('attempts.createdAt < :dateThreshold', { dateThreshold })
       .getMany();
   }
 }

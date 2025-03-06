@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository, SelectQueryBuilder } from 'typeorm';
@@ -65,6 +70,7 @@ export class UserService {
       return;
     } catch (error) {
       this.logger.error('Error while saving user', error.stack);
+      throw new InternalServerErrorException('Error while saving user');
     }
   }
 
@@ -182,6 +188,7 @@ export class UserService {
       return updatedUser;
     } catch (error) {
       this.logger.error(`Failed to update user ${email}`, error.stack);
+      throw new InternalServerErrorException('Failed to update user.');
     }
   }
 
@@ -196,6 +203,7 @@ export class UserService {
       };
     } catch (error) {
       this.logger.error(`Failed to remove user from the database`, error.stack);
+      throw new InternalServerErrorException('Failed to remove user.');
     }
   }
 }

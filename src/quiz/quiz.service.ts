@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { QuizDto } from './dto/quiz.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Quiz } from './entities/quiz.entity';
@@ -13,6 +18,8 @@ import { PaginationMetaDto } from '../global/dto/pagination-meta.dto';
 import { NotificationGateway } from '../notification/notification.gateway';
 import { Member } from '../members/entities/member.entity';
 import { CreateNotificationDto } from '../notification/dto/create-notification.dto';
+import { QuizAttempt } from '../quiz-attempt/entities/quiz-attempt.entity';
+import { QuizStartResult } from '../global/interfaces/quiz-start-result.interface';
 
 @Injectable()
 export class QuizService {
@@ -27,6 +34,8 @@ export class QuizService {
     private readonly answerRepository: Repository<Answer>,
     @InjectRepository(Member)
     private readonly memberRepository: Repository<Member>,
+    @InjectRepository(QuizAttempt)
+    private readonly quizAttemptRepository: Repository<QuizAttempt>,
     private notificationGateway: NotificationGateway,
   ) {}
 
@@ -64,6 +73,7 @@ export class QuizService {
       return { message: 'The quiz has been created.' };
     } catch (error) {
       this.logger.error('Error while saving quiz', error.stack);
+      throw new InternalServerErrorException('Error while saving quiz');
     }
   }
 
@@ -75,7 +85,8 @@ export class QuizService {
       this.quizRepository.createQueryBuilder('quiz');
     queryBuilder
       .leftJoinAndSelect('quiz.company', 'company')
-      .leftJoinAndSelect('quiz.questions', 'questions')
+      .leftJoinAndSelect('quiz.attempts', 'attempts')
+      .leftJoinAndSelect('attempts.user', 'user')
       .where('company.id = :companyId', { companyId: companyId })
       .orderBy('quiz.createdAt', pageOptionsDto.order)
       .skip(pageOptionsDto.skip)
@@ -94,7 +105,9 @@ export class QuizService {
       where: { id: quizId },
       relations: {
         company: true,
-        questions: true,
+        questions: {
+          answerOptions: true,
+        },
         attempts: true,
       },
     });
@@ -103,6 +116,37 @@ export class QuizService {
       throw new NotFoundException(`Quiz not found.`);
     }
     return quiz;
+  }
+
+  public async getQuizByIdForStart(
+    quizId: string,
+    email: string,
+  ): Promise<QuizStartResult> {
+    const quiz: Quiz = await this.getQuizById(quizId);
+    quiz.questions.forEach((question: Question) => {
+      question.answerOptions.forEach((answer: Answer) => {
+        delete answer.isCorrect;
+      });
+    });
+    const lastUserAttempt: QuizAttempt = await this.quizAttemptRepository
+      .createQueryBuilder('quizAttempt')
+      .leftJoinAndSelect('quizAttempt.quiz', 'quiz')
+      .leftJoinAndSelect('quizAttempt.user', 'user')
+      .where('quiz.id = :quizId', { quizId })
+      .andWhere('user.emailLogin = :email', { email })
+      .orderBy('quizAttempt.createdAt', 'DESC')
+      .getOne();
+    if (
+      lastUserAttempt &&
+      new Date(lastUserAttempt.createdAt).getTime() +
+        quiz.frequencyInDays * 24 * 60 * 60 * 1000 >
+        new Date().getTime()
+    ) {
+      return {
+        message: 'You recently took the quiz, please try again later.',
+      };
+    }
+    return { quiz };
   }
 
   public async updateQuizById(
@@ -138,6 +182,7 @@ export class QuizService {
       return { message: 'Successfully updated quiz.' };
     } catch (error) {
       this.logger.error(`Failed to save updated quiz.`, error.stack);
+      throw new InternalServerErrorException('Failed to save updated quiz.');
     }
   }
 
@@ -153,6 +198,9 @@ export class QuizService {
       };
     } catch (error) {
       this.logger.error(`Failed to remove quiz from the database`, error.stack);
+      throw new InternalServerErrorException(
+        'Failed to remove quiz from the database.',
+      );
     }
   }
 
@@ -178,8 +226,8 @@ export class QuizService {
     members.forEach((member: Member) => {
       this.notificationGateway.sendNotificationToUser(
         member.user.id,
-        companyId,
         notification,
+        companyId,
       );
     });
   }

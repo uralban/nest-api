@@ -19,15 +19,6 @@ export class CreateQuizAttemptDto {
   quizId?: string;
 
   @ApiProperty({
-    description: 'User id',
-    example: 'e1d4f6c0-b99a-4b59-8d94-c1a8347e8e3d',
-  })
-  @Type(() => String)
-  @IsNotEmpty({ message: 'User id should not be empty' })
-  @IsString({ message: 'User id should be a string' })
-  userId?: string;
-
-  @ApiProperty({
     description: 'List of answers',
     type: [QuestionAttemptAnswerDto],
   })
